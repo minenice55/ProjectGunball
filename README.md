@@ -1,1 +1,1 @@
-# ProjectGunball
+# ProjectGunball - waifu edition
