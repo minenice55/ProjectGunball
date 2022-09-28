@@ -22,6 +22,21 @@ public class Jump : MonoBehaviour
             playerRb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isOnGround = false;
         }
+        if (Input.GetKey(KeyCode.A))
+        {
+            playerRb.AddForce(Vector3.left);
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            playerRb.AddForce(Vector3.right);
+        }
+        if (Input.GetKey(KeyCode.W)){
+            playerRb.AddForce(Vector3.forward);
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            playerRb.AddForce(Vector3.forward * -1);
+        }
     }
 
     private void OnCollisionEnter(Collision collision)
