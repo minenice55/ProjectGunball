@@ -14,14 +14,14 @@ TagManager:
   - UI
   - 
   - 
+  - Player
+  - Ground
+  - Wall
   - 
+  - MapObject
+  - MapObjectSolid
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - WpBullet
   - 
   - 
   - 
