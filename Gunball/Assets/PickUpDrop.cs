@@ -14,7 +14,7 @@ public class PickUpDrop : MonoBehaviour
     [SerializeField] private float force = 150.0f;
 
     private void Update() {
-        if (Input.GetMouseButtonDown(0)) {
+        if (Input.GetKeyDown(KeyCode.E)) {// .GetMouseButtonDown(0)) {
             if (held == null) {
                 RaycastHit hit;
                 if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, pickup)) {
