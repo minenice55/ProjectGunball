@@ -57,7 +57,7 @@ public class PickUpDrop : MonoBehaviour
         heldObj.drag = 1;
         heldObj.constraints = RigidbodyConstraints.None;
 
-        heldObj.transform.parent = null;
-        heldObj = null;
+        held.transform.parent = null;
+        held = null;
     }
 }
