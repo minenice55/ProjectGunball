@@ -3,21 +3,25 @@ using System.Collections;
 using UnityEngine;
 using Cinemachine;
 
-public class Player : MonoBehaviour
+public class Player : MonoBehaviour, IKnocbackableObject
 {
     #region Serialized Components
     [SerializeField] Camera playerCamera;
     [SerializeField] Transform playerCameraTarget;
+    [SerializeField] Transform weaponPos;
     [SerializeField] CinemachineFreeLook playerCineCamera;
     [SerializeField] GameObject visualModel;
     [SerializeField] PlayerParameters playPrm;
     [SerializeField] LayerMask gndCollisionFlags;
+    [SerializeField] GuideManager guideMgr;
+    [SerializeField] Vector3 aimOffset;
     #endregion
 
     #region Public Variables
     public Vector3 Velocity { get { return _playController.velocity; } }
     public bool IsOnGround;
     public bool IsJumping;
+    public WeaponBulletMgr Weapon;
     #endregion
 
     #region Private Variables
@@ -40,6 +44,10 @@ public class Player : MonoBehaviour
         _canJump = true;
         _playController = GetComponent<Rigidbody>();
         _playCollider = GetComponent<CapsuleCollider>();
+
+        Weapon.SetOwner(gameObject, weaponPos);
+        guideMgr.SetWeapon(Weapon);
+        guideMgr.SetCamera(playerCamera);
     }
 
     void Update()
@@ -47,6 +55,18 @@ public class Player : MonoBehaviour
         PollInput();
         TickTimers();
         DoPlayerMovement();
+
+        // from camera orientation set weapon orientation
+        //set vertical aim to the aim offset
+        playerCameraTarget.rotation = playerCamera.transform.rotation;
+        Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
+
+        guideMgr.UpdateGuide();
+
+        if (Input.GetButtonDown("Attack"))
+        {
+            Weapon.FireWeaponBullet(this);
+        }
     }
     #endregion
 
@@ -69,7 +89,7 @@ public class Player : MonoBehaviour
             _playCollider.radius * 0.99f, 
             Vector3.down + direction, out _gndHit, 
             playPrm.Gnd_RayLength + 0.05f, 
-            gndCollisionFlags);
+            gndCollisionFlags, QueryTriggerInteraction.Ignore);
     }
     void GetSlopeNormal()
     {
@@ -113,7 +133,6 @@ public class Player : MonoBehaviour
 
         float speed = IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed;
         float accel = IsOnGround ? playPrm.Move_RunAccel : playPrm.Move_AirAccel;
-        float friction = IsOnGround ? playPrm.Move_RunFriction : playPrm.Move_AirFriction;
 
         if (IsOnGround)
         {
@@ -221,16 +240,34 @@ public class Player : MonoBehaviour
 
     void DoMove(float speed, float accel)
     {
+        Vector3 vel = new Vector3(Velocity.x, 0, Velocity.z);
         Vector3 moveDir = playerCamera.transform.TransformDirection(_input);
         moveDir.y = 0f;
 
         if (_isOnSlope && !IsJumping)
         {
-            moveDir = Vector3.ProjectOnPlane(moveDir, _gndNormal);
+            vel = Velocity;
+            moveDir = Vector3.ProjectOnPlane(moveDir.normalized, _gndNormal);
         }
-        _playController.AddForce(moveDir.normalized * accel, ForceMode.Force);
 
-        DoSpeedCap(speed);
+        //get angle between velocity and input
+        float mag = Vector3.Project(vel, moveDir.normalized).magnitude;
+        Debug.Log(mag);
+        if (mag < speed - (accel*_dt))
+        {
+            _playController.AddForce(moveDir.normalized * accel, ForceMode.Force);
+        }
+        else if (speed - (accel*_dt) <= mag && mag < speed)
+        {
+            _playController.AddForce(moveDir.normalized * (speed - mag), ForceMode.Force);
+        }
+        else
+        {
+            _playController.AddForce(moveDir.normalized * 0, ForceMode.Force);
+        }
+
+        if (IsOnGround)
+            DoSpeedCap(speed);
     }
 
     void DoSpeedCap(float speed) {
@@ -273,8 +310,15 @@ public class Player : MonoBehaviour
         public static Quaternion TiltRotationTowardsVelocity( Quaternion cleanRotation, Vector3 referenceUp, Vector3 vel, float velMagFor45Degree )
         {
             Vector3 rotAxis = Vector3.Cross( referenceUp, vel );
-            float tiltAngle = Mathf.Atan( vel.magnitude / velMagFor45Degree) * Mathf.Rad2Deg;
+            float tiltAngle = Mathf.Min(Mathf.Atan( vel.magnitude / velMagFor45Degree) * Mathf.Rad2Deg, 22.5f);
             return Quaternion.AngleAxis( tiltAngle, rotAxis ) * cleanRotation;    //order matters
+        }
+    #endregion
+
+    #region Inherited Methods
+        public void Knockback(Vector3 force, Vector3 pos)
+        {
+            _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
         }
     #endregion
 
@@ -284,19 +328,13 @@ public class Player : MonoBehaviour
         [Header("Movement")]
         public float Move_RunSpeed = 5.0f;
         public float Move_RunAccel = 100.0f;
-        public float Move_RunFriction = 1f;
         public float Move_AirSpeed = 5.0f;
         public float Move_AirAccel = 100.0f;
-        public float Move_AirFriction = 0f;
         public float Move_SlideSpeed = 1f;
-        public float Move_SlideFriction = 0.3f;
-        public float Move_SlopeSnap = 80f;
-        public float Move_Gravity = 9.81f;
         public float Move_TerminalGravity = 20f;
 
         [Header("Jumping")]
         public float Jump_Velocity = 5.0f;
-        public float Jump_CoyoteTime = 0.2f;
         public float Jump_Shortening = 1f;
         
 
