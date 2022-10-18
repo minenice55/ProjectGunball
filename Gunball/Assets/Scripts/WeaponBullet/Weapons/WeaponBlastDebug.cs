@@ -20,10 +20,9 @@ public class WeaponBlastDebug : WeaponBulletMgr
     {
         float counter = Mathf.Min(MovePrm.ToGravityTime, GuidePrm.ShotGuideSecs);
         List<Vector3> points = new List<Vector3>();
-        points.Add(RootSpawnPos.position);
         Vector3 currPos = BulletSpawnPos.position;
         Vector3[] castPoints;
-        currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, currPos, facingDirection, 0, counter, MovePrm, out castPoints);
+        currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, RootSpawnPos.position, currPos, facingDirection, 0, counter, MovePrm, out castPoints);
         foreach (Vector3 p in castPoints)
         {
             points.Add(p);
@@ -31,7 +30,7 @@ public class WeaponBlastDebug : WeaponBulletMgr
 
         while (counter < GuidePrm.ShotGuideSecs)
         {
-            currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, currPos, facingDirection, counter, STEP_TIME, MovePrm, out castPoints);
+            currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, RootSpawnPos.position, currPos, facingDirection, counter, STEP_TIME, MovePrm, out castPoints);
             foreach (Vector3 p in castPoints)
             {
                 points.Add(p);
@@ -50,7 +49,7 @@ public class WeaponBlastDebug : WeaponBulletMgr
     {
         GameObject bullet = Instantiate(BulletObject, BulletSpawnPos.position, Quaternion.identity);
         BulletRocket bulletBase = bullet.GetComponent<BulletRocket>();
-        bulletBase.SetupBullet(BulletSpawnPos, facingDirection, player, IgnoreColliders, ColPrm, BlastPrm, DmgPrm);
+        bulletBase.SetupBullet(BulletSpawnPos, RootSpawnPos, facingDirection, player, IgnoreColliders, ColPrm, BlastPrm, DmgPrm);
         bullet.SetActive(true);
     }
 }

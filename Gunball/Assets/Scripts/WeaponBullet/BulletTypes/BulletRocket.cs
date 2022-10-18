@@ -6,12 +6,12 @@ public class BulletRocket : BulletBase
 {
     [SerializeField] GameObject BlastPrefab;
     WeaponBulletMgr.MoveBlastParam BlastParam;
-    public void SetupBullet(Transform weaponPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
+    public void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
         WeaponBulletMgr.CollisionParam colPrm, 
         WeaponBulletMgr.MoveBlastParam movePrm, 
         WeaponBulletMgr.DamageParam dmgPrm )
     {
-        base.SetupBullet(weaponPos, facing, owner, ignoreColliders, colPrm, movePrm.MoveSimpleParam, dmgPrm);
+        base.SetupBullet(weaponPos, playRootPos, facing, owner, ignoreColliders, colPrm, movePrm.MoveSimpleParam, dmgPrm);
         BlastParam = movePrm;
         transform.forward = facing;
     }

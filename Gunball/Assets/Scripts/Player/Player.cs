@@ -15,6 +15,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
     [SerializeField] LayerMask gndCollisionFlags;
     [SerializeField] GuideManager guideMgr;
     [SerializeField] Vector3 aimOffset;
+    [SerializeField] CapsuleCollider _playCollider;
     #endregion
 
     #region Public Variables
@@ -29,7 +30,6 @@ public class Player : MonoBehaviour, IKnocbackableObject
     float _dt;
     float coyoteTimer, requestMoveTimer;
     Rigidbody _playController;
-    CapsuleCollider _playCollider;
     Vector3 _input;
     Vector3 _gndNormal;
     RaycastHit _gndHit;
@@ -43,7 +43,6 @@ public class Player : MonoBehaviour, IKnocbackableObject
     {
         _canJump = true;
         _playController = GetComponent<Rigidbody>();
-        _playCollider = GetComponent<CapsuleCollider>();
 
         Weapon.SetOwner(gameObject, weaponPos);
         guideMgr.SetWeapon(Weapon);
@@ -103,7 +102,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
         _gndNormal = _gndHit.normal;
         float ang = Vector3.Angle(Vector3.up, _gndNormal);
         _isOnSlope = ang <= playPrm.Gnd_SlopeLimit && ang != 0f;
-        _isOnSlopeSteep = ang > playPrm.Gnd_SlopeLimit;
+        _isOnSlopeSteep = ang > playPrm.Gnd_SlopeLimit && ang < 90f;
     }
     #endregion
 
@@ -232,7 +231,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
             }
             else
             {
-                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 10f);
+                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 15f);
                 visualModel.transform.rotation = Quaternion.Slerp(visualModel.transform.rotation, targetRot, 8f * _dt);
             }
         }
@@ -251,7 +250,8 @@ public class Player : MonoBehaviour, IKnocbackableObject
         }
 
         //get angle between velocity and input
-        float mag = Vector3.Project(vel, moveDir.normalized).magnitude;
+        float a = Vector3.Angle(vel, moveDir.normalized * accel);
+        float mag = vel.magnitude * Mathf.Cos(a * Mathf.Deg2Rad);
         Debug.Log(mag);
         if (mag < speed - (accel*_dt))
         {
@@ -310,7 +310,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
         public static Quaternion TiltRotationTowardsVelocity( Quaternion cleanRotation, Vector3 referenceUp, Vector3 vel, float velMagFor45Degree )
         {
             Vector3 rotAxis = Vector3.Cross( referenceUp, vel );
-            float tiltAngle = Mathf.Min(Mathf.Atan( vel.magnitude / velMagFor45Degree) * Mathf.Rad2Deg, 22.5f);
+            float tiltAngle = Mathf.Atan( vel.magnitude / velMagFor45Degree) * Mathf.Rad2Deg;
             return Quaternion.AngleAxis( tiltAngle, rotAxis ) * cleanRotation;    //order matters
         }
     #endregion

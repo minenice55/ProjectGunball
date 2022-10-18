@@ -7,6 +7,7 @@ public class BulletBase : MonoBehaviour
     protected float lifeTime = 0;
     protected Player owner;
     protected Vector3 startPos;
+    protected Vector3 rootPos;
     protected Collider[] ignoreColliders;
     protected Vector3 facingDirection;
     protected Vector3[] castPoints;
@@ -19,7 +20,7 @@ public class BulletBase : MonoBehaviour
 
     LayerMask TerrainMask;
 
-    public virtual void SetupBullet(Transform weaponPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
+    public virtual void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
         WeaponBulletMgr.CollisionParam colPrm, 
         WeaponBulletMgr.MoveSimpleParam movePrm, 
         WeaponBulletMgr.DamageParam dmgPrm )
@@ -29,6 +30,7 @@ public class BulletBase : MonoBehaviour
         DmgPrm = dmgPrm;
 
         startPos = weaponPos.position;
+        rootPos = playRootPos.position;
         transform.position = startPos;
         facingDirection = facing;
         this.ignoreColliders = ignoreColliders;
@@ -62,7 +64,7 @@ public class BulletBase : MonoBehaviour
     protected virtual Vector3[] DoBulletMove(float _dt, out Vector3 nextPos)
     {
         Vector3[] castPoints;
-        nextPos = TryBulletMove(startPos, transform.position, facingDirection, lifeTime, _dt, MovePrm, out castPoints);
+        nextPos = TryBulletMove(startPos, rootPos, transform.position, facingDirection, lifeTime, _dt, MovePrm, out castPoints);
         lifeTime += _dt;
         return castPoints;
     }
@@ -131,14 +133,22 @@ public class BulletBase : MonoBehaviour
         colPosition = Vector3.zero;
         return false;
     }
-    public static Vector3 TryBulletMove(Vector3 startPos, Vector3 currPos, Vector3 facingDirection, float lifeTime, float _dt, WeaponBulletMgr.MoveSimpleParam movePrm, out Vector3[] castPos)
+    public static Vector3 TryBulletMove(Vector3 startPos, Vector3 rootPos, Vector3 currPos, Vector3 facingDirection, float lifeTime, float _dt, WeaponBulletMgr.MoveSimpleParam movePrm, out Vector3[] castPos)
     {
         List<Vector3> castPoints = new List<Vector3>();
         Vector3 pos = currPos;
         Vector3 gravityStateSpeed = movePrm.GravitySpeed * facingDirection;
         float gravity = 0;
         float currTime = lifeTime + _dt;
-        castPoints.Add(pos);
+        if (lifeTime <= 0f)
+        {
+            castPoints.Add(rootPos);
+            castPoints.Add(startPos);
+        }
+        else
+        {
+            castPoints.Add(pos);
+        }
         //move bullet
         if (currTime > movePrm.ToGravityTime)
         {
