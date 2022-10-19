@@ -75,6 +75,10 @@ public class Player : MonoBehaviour, IShootableObject
             _fireRelaxTime = 0f;
             Weapon.FireWeaponBullet(this);
         }
+        else if (_firingTime > 0)
+        {
+            _fireRelaxTime += _dt;
+        }
     }
     #endregion
 
@@ -249,7 +253,7 @@ public class Player : MonoBehaviour, IShootableObject
             }
             else
             {
-                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 15f);
+                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 5f);
                 visualModel.transform.rotation = Quaternion.Slerp(visualModel.transform.rotation, targetRot, 8f * _dt);
             }
         }
