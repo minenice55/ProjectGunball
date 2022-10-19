@@ -19,8 +19,8 @@ public class BulletBlast : MonoBehaviour
             Collider[] cols = Physics.OverlapSphere(pos, blastPrm.DistanceDamage[blastPrm.DistanceDamage.Length - 1].BlastRadius, playerMask);
             foreach (Collider col in cols)
             {
-                Player player = col.GetComponent<Player>();
-                if (player != null)
+                IShootableObject target = col.GetComponent<IShootableObject>();
+                if (target != null)
                 {
                     Vector3 cPoint = col.ClosestPoint(pos);
                     float dist = Vector3.Distance(pos, cPoint);
@@ -28,9 +28,10 @@ public class BulletBlast : MonoBehaviour
                     {
                         if (dist <= blastPrm.DistanceDamage[i].BlastRadius)
                         {
-                            Debug.Log("Hit player with damage: " + blastPrm.DistanceDamage[i].BlastDamage);
+                            Debug.Log("Hit shootable object with damage: " + blastPrm.DistanceDamage[i].BlastDamage);
                             Vector3 direction = (cPoint - transform.position).normalized;
-                            player.Knockback(direction * blastPrm.DistanceDamage[i].Knockback.Force, pos);
+                            target.DoDamage(blastPrm.DistanceDamage[i].BlastDamage);
+                            target.Knockback(direction * blastPrm.DistanceDamage[i].Knockback.Force, pos);
                             break;
                         }
                     }

@@ -4,18 +4,18 @@ using UnityEngine;
 
 public class BulletBase : MonoBehaviour
 {
-    protected float lifeTime = 0;
+    protected float lifeTime;
     protected Player owner;
     protected Vector3 startPos;
     protected Vector3 rootPos;
     protected Collider[] ignoreColliders;
     protected Vector3 facingDirection;
     protected Vector3[] castPoints;
+    protected WeaponBulletMgr.CollisionParam ColPrm;
+    protected WeaponBulletMgr.MoveSimpleParam MovePrm;
+    protected WeaponBulletMgr.DamageParam DmgPrm;
     float gravity = 0;
     Vector3 gravityStateSpeed;
-    WeaponBulletMgr.CollisionParam ColPrm;
-    WeaponBulletMgr.MoveSimpleParam MovePrm;
-    WeaponBulletMgr.DamageParam DmgPrm;
     RaycastHit[] hitsBuffer = new RaycastHit[16];
 
     LayerMask TerrainMask;
@@ -44,12 +44,13 @@ public class BulletBase : MonoBehaviour
         float _dt = Time.deltaTime;
         Vector3 nextPos;
         Vector3 colPos;
+        RaycastHit hit;
         castPoints = DoBulletMove(_dt, out nextPos);
         if (castPoints != null)
         {
-            if (CheckBulletCollision(castPoints, out colPos))
+            if (CheckBulletCollision(castPoints, out colPos, out hit))
             {
-                DoOnCollisionKill(colPos);
+                DoOnCollisionKill(colPos, hit);
                 Destroy(gameObject);
             }
             else
@@ -59,7 +60,24 @@ public class BulletBase : MonoBehaviour
         }
     }
 
-    protected virtual void DoOnCollisionKill(Vector3 pos){}
+    protected virtual void DoOnCollisionKill(Vector3 pos, RaycastHit hit)
+    {
+        IShootableObject hitObj = hit.collider.GetComponent<IShootableObject>();
+        if (hitObj != null)
+        {
+            float damage = DmgPrm.DamageMax;
+            if (lifeTime >= DmgPrm.ReduceStartTime)
+            {
+                damage = Mathf.Max( 
+                    DmgPrm.DamageMin,
+                    Mathf.Lerp(DmgPrm.DamageMax, DmgPrm.DamageMin, (lifeTime - DmgPrm.ReduceStartTime) / (DmgPrm.ReduceEndTime - DmgPrm.ReduceStartTime))
+                );
+            }
+            hitObj.DoDamage(damage, owner);
+        }
+    }
+
+    protected virtual void DoOnCollisionKill(Vector3 pos) {}
 
     protected virtual Vector3[] DoBulletMove(float _dt, out Vector3 nextPos)
     {
@@ -68,7 +86,7 @@ public class BulletBase : MonoBehaviour
         lifeTime += _dt;
         return castPoints;
     }
-    protected virtual bool CheckBulletCollision(Vector3[] castPoints, out Vector3 colPosition)
+    protected virtual bool CheckBulletCollision(Vector3[] castPoints, out Vector3 colPosition, out RaycastHit hit)
     {
         //spherecast between each point
         for (int i = 0; i < castPoints.Length - 1; i++)
@@ -105,6 +123,7 @@ public class BulletBase : MonoBehaviour
                         }
                         if (ignore) continue;
                         colPosition = hitsBuffer[j].point;
+                        hit = hitsBuffer[j];
                         return true;
                     }
                 }
@@ -126,11 +145,13 @@ public class BulletBase : MonoBehaviour
                 {
                     if (hitsBuffer[j].collider == null) continue;
                     colPosition = hitsBuffer[j].point;
+                    hit = hitsBuffer[j];
                     return true;
                 }
             }
         }
         colPosition = Vector3.zero;
+        hit = new RaycastHit();
         return false;
     }
     public static Vector3 TryBulletMove(Vector3 startPos, Vector3 rootPos, Vector3 currPos, Vector3 facingDirection, float lifeTime, float _dt, WeaponBulletMgr.MoveSimpleParam movePrm, out Vector3[] castPos)

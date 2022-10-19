@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine;
 using Cinemachine;
 
-public class Player : MonoBehaviour, IKnocbackableObject
+public class Player : MonoBehaviour, IShootableObject
 {
     #region Serialized Components
     [SerializeField] Camera playerCamera;
@@ -26,8 +26,11 @@ public class Player : MonoBehaviour, IKnocbackableObject
     #endregion
 
     #region Private Variables
+    float _hp;
+
     bool _canJump, _isOnSlope, _isOnSlopeSteep;
     float _dt;
+    float _firingTime, _fireRelaxTime;
     float coyoteTimer, requestMoveTimer;
     Rigidbody _playController;
     Vector3 _input;
@@ -35,6 +38,11 @@ public class Player : MonoBehaviour, IKnocbackableObject
     RaycastHit _gndHit;
     float currentFloorFriction;
     Quaternion _onJmpRotation;
+    #endregion
+
+    #region Public Variables
+    public float Health { get { return _hp; } set { _hp = value; } }
+    public bool IsDead { get { return _hp <= 0; } }
     #endregion
 
 
@@ -62,8 +70,9 @@ public class Player : MonoBehaviour, IKnocbackableObject
 
         guideMgr.UpdateGuide();
 
-        if (Input.GetButtonDown("Attack"))
+        if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
         {
+            _fireRelaxTime = 0f;
             Weapon.FireWeaponBullet(this);
         }
     }
@@ -113,11 +122,20 @@ public class Player : MonoBehaviour, IKnocbackableObject
         if (coyoteTimer > 0)
             coyoteTimer = Mathf.Max(coyoteTimer - _dt, 0);
 
-        if (_input.magnitude > 0.05f && Math.Abs(playerCineCamera.m_XAxis.m_InputAxisValue) <= 0.05f && !UnityEngine.Input.GetButton("Attack"))
+        if (UnityEngine.Input.GetButton("Attack"))
+        {
+            _firingTime += _dt;
+        }
+        else
+        {
+            _firingTime = 0f;
+            _fireRelaxTime += _dt;
+        }
+
+        if (_input.magnitude > 0.05f && Math.Abs(playerCineCamera.m_XAxis.m_InputAxisValue) <= 0.05f && _firingTime <= 0f)
             requestMoveTimer += _dt;
         else
             requestMoveTimer = 0f;
-
     }
 
     void PollInput()
@@ -252,7 +270,6 @@ public class Player : MonoBehaviour, IKnocbackableObject
         //get angle between velocity and input
         float a = Vector3.Angle(vel, moveDir.normalized * accel);
         float mag = vel.magnitude * Mathf.Cos(a * Mathf.Deg2Rad);
-        Debug.Log(mag);
         if (mag < speed - (accel*_dt))
         {
             _playController.AddForce(moveDir.normalized * accel, ForceMode.Force);
@@ -319,6 +336,18 @@ public class Player : MonoBehaviour, IKnocbackableObject
         public void Knockback(Vector3 force, Vector3 pos)
         {
             _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
+        }
+
+        public void DoDamage(float damage, Player source = null)
+        {
+            // log damage
+            Debug.Log("Took " + damage + " damage");
+        }
+
+        public void RecoverDamage(float healing, Player source = null)
+        {
+            // log recovery
+            Debug.Log("Recovered " + healing + " damage");
         }
     #endregion
 

@@ -43,6 +43,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1476a8fe94cd4934f80d21637ded3fcf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  WpPrm:
+    MaxAmmo: 0
+    AmmoClip: 0
+    AmmoConsume: 0
+    PreDelayTime: 0
+    RepeatTime: 1
+    RunSpeedOverride: 0
+    AirSpeedOverride: 0
   RootSpawnPos: {fileID: 0}
   BulletSpawnPos: {fileID: 0}
   BulletObject: {fileID: 568297050330448013, guid: a6e006700ea11b843a897681beba73dc,

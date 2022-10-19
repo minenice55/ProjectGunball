@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class WeaponBulletMgr : MonoBehaviour
 {
+    [SerializeField] public WeaponParam WpPrm;
     public const float STEP_TIME = 1/20f;
     [SerializeField] protected Transform RootSpawnPos;
     [SerializeField] protected Transform BulletSpawnPos;
@@ -13,6 +14,7 @@ public class WeaponBulletMgr : MonoBehaviour
     
     public Collider[] IgnoreColliders;
     protected Vector3 facingDirection;
+    protected float nextFireTime = 0;
 
     public enum GuideType {
         None,
@@ -36,12 +38,83 @@ public class WeaponBulletMgr : MonoBehaviour
 
     #region Virtual Methods
     public virtual void FireWeaponBullet(Player player) {}
+    public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm) {
+        if (heldDuration <= 0 && relaxDuration > 0)
+        {
+            nextFireTime = 0;
+            return false;
+        }
+        if (heldDuration < wpPrm.PreDelayTime || heldDuration < Mathf.Max(0, wpPrm.RepeatTime - relaxDuration))
+            return false;
+        if (heldDuration >= nextFireTime)
+        {
+            nextFireTime = heldDuration + wpPrm.RepeatTime;
+            return true;
+        }
+        return false;
+    }
     public virtual Vector3[] GetGuideCastPoints() { return new Vector3[]{RootSpawnPos.position, BulletSpawnPos.position}; }
     public virtual GuideType GetGuideType() { return GuideType.None; }
     public virtual LayerMask GetGuideCollisionMask() { return new LayerMask(); }
     #endregion
     
     #region Parameter Structs
+    [Serializable] public struct WeaponParam
+    {
+        [Tooltip("Maximum reserve ammo")]
+        public int MaxAmmo;
+        [Tooltip("Clip size (-1: no clip, draw directly from reserves)")]
+        public int AmmoClip;
+        [Tooltip("Ammo consumed per shot")]
+        public int AmmoConsume;
+
+        [Tooltip("Weapon startup time")]
+        public float PreDelayTime;
+        [Tooltip("Time between shots")]
+        public float RepeatTime;
+
+        [Tooltip("Override player run speed while firing (-1: disabled)")]
+        public float RunSpeedOverride;
+        [Tooltip("Override player air speed while firing (-1: disabled)")]
+        public float AirSpeedOverride;
+    }
+
+    [Serializable] public struct ChargeParam
+    {
+        [Tooltip("Charge time for full power")]
+        public float FullChargeTime;
+        [Tooltip("Need to charge for at least this time to fire")]
+        public float MinChargeTime;
+        [Tooltip("Ammo consumed on min charge (-1: use same ammo as normal)")]
+        public int MinChargeAmmo;
+    }
+
+    [Serializable] public struct SpreadParam
+    {
+        [Tooltip("Spread in degrees while on ground")]
+        public float GroundDegSpread;
+        [Tooltip("Spread in degrees while jumping")]
+        public float JumpDegSpread;
+
+        [Tooltip("Starting spread bias on spawn")]
+        public float DegBiasStart;
+        [Tooltip("Maximum spread bias while on ground")]
+        public float GroundDegBiasMax;
+
+        [Tooltip("Set spread bias to this value when jumping")]
+        public float JumpDegBiasSetting;
+
+        [Tooltip("Spread bias increase while holding down the trigger")]
+        public float DegBiasIncrease;
+        [Tooltip("Spread bias decrease while letting go of the trigger")]
+        public float DegBiasDecrease;
+
+        [Tooltip("Time to start returning spread value to grounded values after jumping")]
+        public float JumpSpreadLerpStart;
+        [Tooltip("Time to finish returning spread value to grounded values after jumping")]
+        public float JumpSpreadLerpEnd;
+    }
+
     [Serializable] public struct CollisionParam
     {
         [Tooltip("Starting radius of the bullet for terrain collision detection")]
@@ -101,7 +174,7 @@ public class WeaponBulletMgr : MonoBehaviour
         [Tooltip("Linearly interpolate damage and knockback based on distance from radius")]
         public bool DamageLinear;
         public DistanceDamageParam[] DistanceDamage;
-        [Serializable] public class DistanceDamageParam
+        [Serializable] public struct DistanceDamageParam
         {
             [Tooltip("Radius of the blast")]
             public float BlastRadius;

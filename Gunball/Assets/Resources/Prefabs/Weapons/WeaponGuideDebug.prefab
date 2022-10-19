@@ -27,7 +27,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -44,6 +43,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cda775e346985e04fbbe26a4fc883095, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  WpPrm:
+    MaxAmmo: 0
+    AmmoClip: 0
+    AmmoConsume: 0
+    PreDelayTime: 0
+    RepeatTime: 0.1
+    RunSpeedOverride: 0
+    AirSpeedOverride: 0
   RootSpawnPos: {fileID: 0}
   BulletSpawnPos: {fileID: 0}
   BulletObject: {fileID: 1042726209451766694, guid: c407532cd99036e4abc26f38f59158ca,
@@ -62,6 +69,7 @@ MonoBehaviour:
     CollisionMask:
       serializedVersion: 2
       m_Bits: 14080
+    FriendlyFireIgnoreTime: 0
   MovePrm:
     SpawnSpeed: 48
     ToGravityTime: 32
