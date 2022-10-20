@@ -45,6 +45,8 @@ public class WeaponBlastDebug : WeaponBulletMgr
         return ColPrm.CollisionMask;
     }
 
+    public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
+
     public override void FireWeaponBullet(Player player)
     {
         GameObject bullet = Instantiate(BulletObject, BulletSpawnPos.position, Quaternion.identity);

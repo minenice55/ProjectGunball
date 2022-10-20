@@ -14,7 +14,7 @@ public class WeaponBulletMgr : MonoBehaviour
     
     public Collider[] IgnoreColliders;
     protected Vector3 facingDirection;
-    protected float nextFireTime = 0;
+    protected float nextFireTime = 0, lastActionTime = 0;
 
     public enum GuideType {
         None,
@@ -44,7 +44,8 @@ public class WeaponBulletMgr : MonoBehaviour
             nextFireTime = 0;
             return false;
         }
-        if (heldDuration < wpPrm.PreDelayTime || heldDuration < Mathf.Max(0, wpPrm.RepeatTime - relaxDuration))
+        lastActionTime = Time.time;
+        if (heldDuration < Mathf.Max(0, wpPrm.RepeatTime - relaxDuration))
             return false;
         if (heldDuration >= nextFireTime)
         {
@@ -53,7 +54,10 @@ public class WeaponBulletMgr : MonoBehaviour
         }
         return false;
     }
+    public virtual bool GetPlayerInAction() {return (lastActionTime != 0) && (Time.time - lastActionTime <= WpPrm.PreDelayTime);}
+
     public virtual Vector3[] GetGuideCastPoints() { return new Vector3[]{RootSpawnPos.position, BulletSpawnPos.position}; }
+    public virtual float GetGuideRadius() { return 0f; }
     public virtual GuideType GetGuideType() { return GuideType.None; }
     public virtual LayerMask GetGuideCollisionMask() { return new LayerMask(); }
     #endregion
@@ -139,6 +143,8 @@ public class WeaponBulletMgr : MonoBehaviour
     {
         [Tooltip("How far ahead to redict the bullet position for the guide / reticle")]
         public float ShotGuideSecs;
+        [Tooltip("Radius of the guide spherecast")]
+        public float GuideRadius;
         [Tooltip("A generic width value for the guide / reticle")]
         public float GuideWidth;
         [Tooltip("The type of guide / reticle")]

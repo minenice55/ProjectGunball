@@ -73,13 +73,19 @@ public class Player : MonoBehaviour, IShootableObject
         if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
         {
             _fireRelaxTime = 0f;
-            Weapon.FireWeaponBullet(this);
+            StartCoroutine(WaitAndFire(Weapon.WpPrm.PreDelayTime));
         }
         else if (_firingTime > 0)
         {
             _fireRelaxTime += _dt;
         }
     }
+
+    IEnumerator WaitAndFire(float waitTime)
+    {
+        yield return new WaitForSeconds(waitTime);
+        Weapon.FireWeaponBullet(this);
+    } 
     #endregion
 
     #region Collision
@@ -180,7 +186,7 @@ public class Player : MonoBehaviour, IShootableObject
             DoJumpShortening();
         }
         
-        bool attacking = UnityEngine.Input.GetButton("Attack");
+        bool attacking = Weapon.GetPlayerInAction();
         if (_input.magnitude > 0f)
         {
             if (!attacking)
@@ -253,7 +259,7 @@ public class Player : MonoBehaviour, IShootableObject
             }
             else
             {
-                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 5f);
+                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 32f);
                 visualModel.transform.rotation = Quaternion.Slerp(visualModel.transform.rotation, targetRot, 8f * _dt);
             }
         }
@@ -339,6 +345,7 @@ public class Player : MonoBehaviour, IShootableObject
     #region Inherited Methods
         public void Knockback(Vector3 force, Vector3 pos)
         {
+            IsJumping = false;
             _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
         }
 

@@ -62,7 +62,7 @@ public class GuideManager : MonoBehaviour
 
             // check for collision
             // todo: use the non-alloc version of this
-            Physics.RaycastNonAlloc(startPos, dir, hitsBuffer, dist, Wpn.GetGuideCollisionMask() , QueryTriggerInteraction.Ignore);
+            Physics.SphereCastNonAlloc(startPos, Wpn.GetGuideRadius(), dir, hitsBuffer, dist, Wpn.GetGuideCollisionMask() , QueryTriggerInteraction.Ignore);
             // sort by distance
             System.Array.Sort(hitsBuffer, (a, b) => a.distance.CompareTo(b.distance));
             // iterate through hits and check if they are in our ignore list

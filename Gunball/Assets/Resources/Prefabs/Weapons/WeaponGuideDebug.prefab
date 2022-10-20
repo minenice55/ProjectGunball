@@ -58,13 +58,14 @@ MonoBehaviour:
   IgnoreColliders: []
   GuidePrm:
     ShotGuideSecs: 1
+    GuideRadius: 0.2
     GuideWidth: 0
     ShotGuideType: 1
   ColPrm:
     InitRadiusField: 0.1
     InitRadiusPlayer: 0.2
-    EndRadiusField: 0.5
-    EndRadiusPlayer: 0.6
+    EndRadiusField: 0.1
+    EndRadiusPlayer: 0.2
     GuideRadius: 0
     CollisionMask:
       serializedVersion: 2

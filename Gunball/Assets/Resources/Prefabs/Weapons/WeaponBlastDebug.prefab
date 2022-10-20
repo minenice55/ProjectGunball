@@ -47,8 +47,8 @@ MonoBehaviour:
     MaxAmmo: 0
     AmmoClip: 0
     AmmoConsume: 0
-    PreDelayTime: 0
-    RepeatTime: 1
+    PreDelayTime: 0.06666667
+    RepeatTime: 0.8
     RunSpeedOverride: 0
     AirSpeedOverride: 0
   RootSpawnPos: {fileID: 0}
@@ -60,6 +60,7 @@ MonoBehaviour:
   - {fileID: 0}
   GuidePrm:
     ShotGuideSecs: 0.5
+    GuideRadius: 0.25
     GuideWidth: 0
     ShotGuideType: 1
   ColPrm:
