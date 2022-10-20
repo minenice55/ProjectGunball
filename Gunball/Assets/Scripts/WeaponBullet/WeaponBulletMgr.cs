@@ -14,7 +14,8 @@ public class WeaponBulletMgr : MonoBehaviour
     
     public Collider[] IgnoreColliders;
     protected Vector3 facingDirection;
-    protected float nextFireTime = 0, lastActionTime = 0;
+    protected float nextFireTime = 0, lastActionTime = Single.MinValue;
+    protected Player owner;
 
     public enum GuideType {
         None,
@@ -30,6 +31,7 @@ public class WeaponBulletMgr : MonoBehaviour
     }
     public void SetOwner(GameObject owner, Transform weaponPos)
     {
+        this.owner = owner.GetComponent<Player>();
         RootSpawnPos = owner.transform;
         BulletSpawnPos = weaponPos;
         IgnoreColliders = owner.GetComponentsInChildren<Collider>();
@@ -37,7 +39,15 @@ public class WeaponBulletMgr : MonoBehaviour
     #endregion
 
     #region Virtual Methods
-    public virtual void FireWeaponBullet(Player player) {}
+    public virtual void StartFireSequence(Player player) {
+        owner.StartCoroutine(DoFireSequence(player));
+    }
+    public virtual IEnumerator DoFireSequence(Player player)
+    {
+        yield return new WaitForSeconds(WpPrm.PreDelayTime);
+        CreateWeaponBullet(player);
+    } 
+    public virtual void CreateWeaponBullet(Player player) {}
     public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm) {
         if (heldDuration <= 0 && relaxDuration > 0)
         {
@@ -54,7 +64,7 @@ public class WeaponBulletMgr : MonoBehaviour
         }
         return false;
     }
-    public virtual bool GetPlayerInAction() {return (lastActionTime != 0) || (Time.time - lastActionTime <= WpPrm.PreDelayTime);}
+    public virtual bool GetPlayerInAction() {return (Time.time - lastActionTime <= WpPrm.PreDelayTime);}
 
     public virtual Vector3[] GetGuideCastPoints() { return new Vector3[]{RootSpawnPos.position, BulletSpawnPos.position}; }
     public virtual float GetGuideRadius() { return 0f; }

@@ -73,7 +73,7 @@ public class Player : MonoBehaviour, IShootableObject
         if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
         {
             _fireRelaxTime = 0f;
-            StartCoroutine(WaitAndFire(Weapon.WpPrm.PreDelayTime));
+            Weapon.StartFireSequence(this);
         }
         else if (_firingTime > 0)
         {
@@ -84,7 +84,7 @@ public class Player : MonoBehaviour, IShootableObject
     IEnumerator WaitAndFire(float waitTime)
     {
         yield return new WaitForSeconds(waitTime);
-        Weapon.FireWeaponBullet(this);
+        Weapon.CreateWeaponBullet(this);
     } 
     #endregion
 

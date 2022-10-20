@@ -47,7 +47,7 @@ public class WeaponBlastDebug : WeaponBulletMgr
 
     public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
 
-    public override void FireWeaponBullet(Player player)
+    public override void CreateWeaponBullet(Player player)
     {
         GameObject bullet = Instantiate(BulletObject, BulletSpawnPos.position, Quaternion.identity);
         BulletRocket bulletBase = bullet.GetComponent<BulletRocket>();
