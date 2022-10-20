@@ -54,7 +54,7 @@ public class WeaponBulletMgr : MonoBehaviour
         }
         return false;
     }
-    public virtual bool GetPlayerInAction() {return (lastActionTime != 0) && (Time.time - lastActionTime <= WpPrm.PreDelayTime);}
+    public virtual bool GetPlayerInAction() {return (lastActionTime != 0) || (Time.time - lastActionTime <= WpPrm.PreDelayTime);}
 
     public virtual Vector3[] GetGuideCastPoints() { return new Vector3[]{RootSpawnPos.position, BulletSpawnPos.position}; }
     public virtual float GetGuideRadius() { return 0f; }
