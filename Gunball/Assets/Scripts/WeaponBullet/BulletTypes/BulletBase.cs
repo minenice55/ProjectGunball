@@ -14,7 +14,6 @@ public class BulletBase : MonoBehaviour
     protected WeaponBulletMgr.CollisionParam ColPrm;
     protected WeaponBulletMgr.MoveSimpleParam MovePrm;
     protected WeaponBulletMgr.DamageParam DmgPrm;
-    float gravity = 0;
     Vector3 gravityStateSpeed;
     RaycastHit[] hitsBuffer = new RaycastHit[16];
 

@@ -6,7 +6,7 @@ using UnityEngine;
 public class WeaponBulletMgr : MonoBehaviour
 {
     [SerializeField] public WeaponParam WpPrm;
-    public const float STEP_TIME = 1/20f;
+    public const float STEP_TIME = 1/30f;
     [SerializeField] protected Transform RootSpawnPos;
     [SerializeField] protected Transform BulletSpawnPos;
 

@@ -28,7 +28,7 @@ public class Player : MonoBehaviour, IShootableObject
     #region Private Variables
     float _hp;
 
-    bool _canJump, _isOnSlope, _isOnSlopeSteep;
+    bool _isOnSlope, _isOnSlopeSteep;
     float _dt;
     float _firingTime, _fireRelaxTime;
     float coyoteTimer, requestMoveTimer;
@@ -36,7 +36,6 @@ public class Player : MonoBehaviour, IShootableObject
     Vector3 _input;
     Vector3 _gndNormal;
     RaycastHit _gndHit;
-    float currentFloorFriction;
     Quaternion _onJmpRotation;
     #endregion
 
@@ -49,7 +48,6 @@ public class Player : MonoBehaviour, IShootableObject
     #region Built-Ins
     void Start()
     {
-        _canJump = true;
         _playController = GetComponent<Rigidbody>();
 
         Weapon.SetOwner(gameObject, weaponPos);
@@ -177,11 +175,11 @@ public class Player : MonoBehaviour, IShootableObject
             _onJmpRotation = Quaternion.Euler(0, visualModel.transform.rotation.eulerAngles.y, 0);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space) && (IsOnGround || coyoteTimer > 0) && !IsJumping)
+        if (Input.GetButtonDown("Jump") && !IsJumping && (IsOnGround || coyoteTimer > 0))
         {
             DoJump();
         }
-        if (Input.GetKeyUp(KeyCode.Space) && Velocity.y > playPrm.Jump_Shortening && IsJumping && !IsOnGround)
+        if (Input.GetButtonUp("Jump") && IsJumping && !IsOnGround && Velocity.y > playPrm.Jump_Shortening)
         {
             DoJumpShortening();
         }
