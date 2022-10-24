@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 public class WeaponBulletMgr : MonoBehaviour
@@ -208,6 +209,15 @@ public class WeaponBulletMgr : MonoBehaviour
         public float Radius;
         [Tooltip("Distance to multiply force by at the edge of the radius")]
         public float DistanceBias;
+        [Tooltip("Distance to multiply force by when hitting a player")]
+        [DefaultValue(1f)]
+        public float PlayerBias;
+        [Tooltip("Distance to multiply force by when hitting the ball")]
+        [DefaultValue(1f)]
+        public float VsBallBias;
+        [Tooltip("Distance to multiply force by when hitting any other map object")]
+        [DefaultValue(1f)]
+        public float MapObjectBias;
     }
 
     [Serializable] public struct DamageParam
@@ -220,6 +230,7 @@ public class WeaponBulletMgr : MonoBehaviour
         public float ReduceStartTime;
         [Tooltip("Time until falloff is complete")]
         public float ReduceEndTime;
+        public KnockbackParam Knockback;
     }
 
     [Serializable] public struct HealingParam

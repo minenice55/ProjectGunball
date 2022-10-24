@@ -73,6 +73,20 @@ public class BulletBase : MonoBehaviour
                 );
             }
             hitObj.DoDamage(damage, owner);
+            float bias = 1f;
+            switch (hitObj.Type)
+            {
+                case IShootableObject.ShootableType.Player:
+                    bias = DmgPrm.Knockback.PlayerBias;
+                    break;
+                case IShootableObject.ShootableType.VsBall:
+                    bias = DmgPrm.Knockback.VsBallBias;
+                    break;
+                case IShootableObject.ShootableType.MapObject:
+                    bias = DmgPrm.Knockback.MapObjectBias;
+                    break;
+            }
+            hitObj.Knockback(facingDirection * DmgPrm.Knockback.Force * bias, pos);
         }
     }
 

@@ -42,6 +42,8 @@ public class Player : MonoBehaviour, IShootableObject
     #region Public Variables
     public float Health { get { return _hp; } set { _hp = value; } }
     public bool IsDead { get { return _hp <= 0; } }
+    public Transform Transform { get { return transform; } }
+    public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
     #endregion
 
 
