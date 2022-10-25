@@ -81,6 +81,13 @@ public class GuideManager : MonoBehaviour
             for (int j = 0; j < hitsBuffer.Length; j++)
             {
                 if (hitsBuffer[j].collider == null) continue;
+                //first check if is none type of IShootableObject
+                IShootableObject shootable = hitsBuffer[j].collider.gameObject.GetComponent<IShootableObject>();
+                if (shootable != null)
+                {
+                    if (shootable.Type == IShootableObject.ShootableType.None) continue;
+                }
+                
                 bool ignore = false;
                 for (int k = 0; k < Wpn.IgnoreColliders.Length; k++)
                 {

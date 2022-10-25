@@ -85,6 +85,8 @@ public class BulletBase : MonoBehaviour
                 case IShootableObject.ShootableType.MapObject:
                     bias = DmgPrm.Knockback.MapObjectBias;
                     break;
+                case IShootableObject.ShootableType.None:
+                    return;
             }
             hitObj.Knockback(facingDirection * DmgPrm.Knockback.Force * bias, pos);
         }
@@ -124,7 +126,14 @@ public class BulletBase : MonoBehaviour
                 {
                     if (hitsBuffer[j].collider != null)
                     {
-                        //check ignore list
+                        //first check if is none type of IShootableObject
+                        IShootableObject shootable = hitsBuffer[j].collider.gameObject.GetComponent<IShootableObject>();
+                        if (shootable != null)
+                        {
+                            if (shootable.Type == IShootableObject.ShootableType.None) continue;
+                        }
+
+                        //then check ignore list
                         bool ignore = false;
                         for (int k = 0; k < ignoreColliders.Length; k++)
                         {

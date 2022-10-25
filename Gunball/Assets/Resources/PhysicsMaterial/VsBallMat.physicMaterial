@@ -9,6 +9,6 @@ PhysicMaterial:
   m_Name: VsBallMat
   dynamicFriction: 1
   staticFriction: 0
-  bounciness: 0.9
+  bounciness: 0.99
   frictionCombine: 1
   bounceCombine: 3

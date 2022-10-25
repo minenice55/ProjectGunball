@@ -45,8 +45,10 @@ public class WeaponBulletMgr : MonoBehaviour
     }
     public virtual IEnumerator DoFireSequence(Player player)
     {
+        player.InFireCoroutine = true;
         yield return new WaitForSeconds(WpPrm.PreDelayTime);
         CreateWeaponBullet(player);
+        player.InFireCoroutine = false;
     } 
     public virtual void CreateWeaponBullet(Player player) {}
     public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm) {
@@ -102,6 +104,10 @@ public class WeaponBulletMgr : MonoBehaviour
         public float MinChargeTime;
         [Tooltip("Ammo consumed on min charge (-1: use same ammo as normal)")]
         public int MinChargeAmmo;
+        [Tooltip("Speed on min charge")]
+        public float MinChargeSpeed;
+        [Tooltip("Speed to lerp to for max charge (a full charge will override this)")]
+        public float MaxChargeSpeed;
     }
 
     [Serializable] public struct SpreadParam

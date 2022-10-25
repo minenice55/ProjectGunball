@@ -5,10 +5,19 @@ using Cinemachine;
 
 public class Player : MonoBehaviour, IShootableObject
 {
+    [System.Flags]
+    public enum FiringType
+    {
+        Primary = 1<<0,
+        Secondary = 1<<1,
+        Super = 1<<2
+    }
+
     #region Serialized Components
     [SerializeField] Camera playerCamera;
     [SerializeField] Transform playerCameraTarget;
     [SerializeField] Transform weaponPos;
+    [SerializeField] Transform vsBallPos;
     [SerializeField] CinemachineFreeLook playerCineCamera;
     [SerializeField] GameObject visualModel;
     [SerializeField] PlayerParameters playPrm;
@@ -19,15 +28,15 @@ public class Player : MonoBehaviour, IShootableObject
     #endregion
 
     #region Public Variables
-    public Vector3 Velocity { get { return _playController.velocity; } }
     public bool IsOnGround;
     public bool IsJumping;
     public WeaponBulletMgr Weapon;
+
+    public bool InFireCoroutine = false;
     #endregion
 
     #region Private Variables
     float _hp;
-
     bool _isOnSlope, _isOnSlopeSteep;
     float _dt;
     float _firingTime, _fireRelaxTime;
@@ -37,13 +46,18 @@ public class Player : MonoBehaviour, IShootableObject
     Vector3 _gndNormal;
     RaycastHit _gndHit;
     Quaternion _onJmpRotation;
+    FiringType _fireKeys;
     #endregion
 
-    #region Public Variables
+    #region Public Properties
+    public Vector3 Velocity { get { return _playController.velocity; } }
     public float Health { get { return _hp; } set { _hp = value; } }
     public bool IsDead { get { return _hp <= 0; } }
     public Transform Transform { get { return transform; } }
     public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
+    public Transform BallPickupPos {get => vsBallPos;}
+    public FiringType CurrentFireKeys {get => _fireKeys;}
+    public bool InAction {get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0;}
     #endregion
 
 
@@ -59,6 +73,7 @@ public class Player : MonoBehaviour, IShootableObject
 
     void Update()
     {
+        _fireKeys = 0;
         PollInput();
         TickTimers();
         DoPlayerMovement();
@@ -134,6 +149,7 @@ public class Player : MonoBehaviour, IShootableObject
 
         if (UnityEngine.Input.GetButton("Attack"))
         {
+            _fireKeys |= FiringType.Primary;
             _firingTime += _dt;
         }
         else

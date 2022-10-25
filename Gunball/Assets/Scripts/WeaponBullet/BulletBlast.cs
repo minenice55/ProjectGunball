@@ -43,9 +43,10 @@ public class BulletBlast : MonoBehaviour
                                 case IShootableObject.ShootableType.MapObject:
                                     bias = kbPrm.MapObjectBias;
                                     break;
+                                case IShootableObject.ShootableType.None:
+                                    continue;
                             }
                             target.Knockback(direction * kbPrm.Force * bias, pos);
-                            break;
                         }
                     }
                 }

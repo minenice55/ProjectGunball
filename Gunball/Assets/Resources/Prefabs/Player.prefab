@@ -413,7 +413,7 @@ Transform:
   m_LocalScale: {x: 0.6, y: 0.25, z: 0.45}
   m_Children: []
   m_Father: {fileID: 7284860289020867849}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &1645686615103723756
 MeshFilter:
@@ -830,6 +830,36 @@ Transform:
   m_Children:
   - {fileID: 2154609522728875469}
   m_Father: {fileID: 6532357023631042641}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3963314091099466947
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8462955016767658057}
+  m_Layer: 0
+  m_Name: BallCarryPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8462955016767658057
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3963314091099466947}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5, y: 0.75, z: 0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 7284860289020867849}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4246467006064045803
@@ -859,6 +889,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 1989388466079014238}
   - {fileID: 597372343696887889}
   m_Father: {fileID: 7894551172962287702}
   m_RootOrder: 2
@@ -921,9 +952,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6316839412420986418}
-  m_LocalRotation: {x: -0.05744882, y: -0.000000034623287, z: -0.0000000019923574,
-    w: 0.9983485}
-  m_LocalPosition: {x: -25, y: -4, z: 9}
+  m_LocalRotation: {x: -0.05744882, y: 0.000000034455983, z: 0.0000000019827302, w: 0.9983485}
+  m_LocalPosition: {x: 0, y: 1, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 7894551172962287702}
@@ -1246,6 +1276,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 8462955016767658057}
   - {fileID: 6855938692587821292}
   m_Father: {fileID: 7894551172962287702}
   m_RootOrder: 1
@@ -1299,6 +1330,36 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7577530492078527239
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1989388466079014238}
+  m_Layer: 0
+  m_Name: WpBallCarryPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1989388466079014238
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7577530492078527239}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.5, y: 0.75, z: 0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 6532357023631042641}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7876151820325823593
 GameObject:
   m_ObjectHideFlags: 0
@@ -1414,7 +1475,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8122331631708433126}
-  m_LocalRotation: {x: 0.02509124, y: 0.00000000215012, z: -5.396617e-11, w: 0.99968517}
+  m_LocalRotation: {x: 0.025091244, y: -0.0000000021501205, z: 5.3966193e-11, w: 0.99968517}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1675,6 +1736,7 @@ MonoBehaviour:
   playerCamera: {fileID: 2786579938625622657}
   playerCameraTarget: {fileID: 6532357023631042641}
   weaponPos: {fileID: 597372343696887889}
+  vsBallPos: {fileID: 8462955016767658057}
   playerCineCamera: {fileID: 6859216385283850612}
   visualModel: {fileID: 6944341138743339369}
   playPrm:
