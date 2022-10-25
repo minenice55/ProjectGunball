@@ -47,18 +47,19 @@ MonoBehaviour:
     MaxAmmo: 0
     AmmoClip: 0
     AmmoConsume: 0
-    PreDelayTime: 0
+    PreDelayTime: 0.13333334
     RepeatTime: 0
     RunSpeedOverride: 0
     AirSpeedOverride: 0
   RootSpawnPos: {fileID: 0}
   BulletSpawnPos: {fileID: 0}
-  BulletObject: {fileID: 0}
+  BulletObject: {fileID: 1985834611839278286, guid: 54f5d7f3d30aada47b91da5ccb1858df,
+    type: 3}
   IgnoreColliders: []
   GuidePrm:
     ShotGuideSecs: 4
-    GuideRadius: 0.2
-    GuideWidth: 0
+    GuideRadius: 0.3
+    GuideWidth: 0.3
     ShotGuideType: 3
   ColPrm:
     InitRadiusField: 0
@@ -71,14 +72,15 @@ MonoBehaviour:
       m_Bits: 9728
     FriendlyFireIgnoreTime: 100000
   MovePrm:
-    SpawnSpeed: 116
+    SpawnSpeed: 32
     ToGravityTime: 0
-    GravitySpeed: 116
-    Gravity: 13
+    GravitySpeed: 32
+    Gravity: 0
     GravityDragRatio: 1
   ChgPrm:
     FullChargeTime: 1
     MinChargeTime: 0.13333334
     MinChargeAmmo: 0
-    MinChargeSpeed: 52
-    MaxChargeSpeed: 100
+    MinChargeSpeed: 16
+    MaxChargeSpeed: 24
+  ball: {fileID: 0}

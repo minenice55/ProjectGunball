@@ -18,6 +18,7 @@ public class Player : MonoBehaviour, IShootableObject
     [SerializeField] Transform playerCameraTarget;
     [SerializeField] Transform weaponPos;
     [SerializeField] Transform vsBallPos;
+    [SerializeField] Transform vsWpnBallPos;
     [SerializeField] CinemachineFreeLook playerCineCamera;
     [SerializeField] GameObject visualModel;
     [SerializeField] PlayerParameters playPrm;
@@ -25,13 +26,15 @@ public class Player : MonoBehaviour, IShootableObject
     [SerializeField] GuideManager guideMgr;
     [SerializeField] Vector3 aimOffset;
     [SerializeField] CapsuleCollider _playCollider;
+    [SerializeField] GameObject[] WeaponPrefabs;
     #endregion
 
     #region Public Variables
+    [NonSerialized] public WeaponBulletMgr Weapon;
     public bool IsOnGround;
     public bool IsJumping;
-    public WeaponBulletMgr Weapon;
 
+    public IEnumerator FireCoroutine;
     public bool InFireCoroutine = false;
     #endregion
 
@@ -39,7 +42,8 @@ public class Player : MonoBehaviour, IShootableObject
     float _hp;
     bool _isOnSlope, _isOnSlopeSteep;
     float _dt;
-    float _firingTime, _fireRelaxTime;
+    float _firingTime;
+    float _fireRelaxTime = Single.MaxValue;
     float coyoteTimer, requestMoveTimer;
     Rigidbody _playController;
     Vector3 _input;
@@ -56,6 +60,7 @@ public class Player : MonoBehaviour, IShootableObject
     public Transform Transform { get { return transform; } }
     public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
     public Transform BallPickupPos {get => vsBallPos;}
+    public Transform BallSpawnPos {get => vsWpnBallPos;}
     public FiringType CurrentFireKeys {get => _fireKeys;}
     public bool InAction {get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0;}
     #endregion
@@ -66,8 +71,7 @@ public class Player : MonoBehaviour, IShootableObject
     {
         _playController = GetComponent<Rigidbody>();
 
-        Weapon.SetOwner(gameObject, weaponPos);
-        guideMgr.SetWeapon(Weapon);
+        ChangeWeapon(WeaponPrefabs[0]);
         guideMgr.SetCamera(playerCamera);
     }
 
@@ -96,11 +100,34 @@ public class Player : MonoBehaviour, IShootableObject
         }
     }
 
-    IEnumerator WaitAndFire(float waitTime)
+    public void ChangeWeapon(GameObject weaponPrefab)
     {
-        yield return new WaitForSeconds(waitTime);
-        Weapon.CreateWeaponBullet(this);
-    } 
+        if (InFireCoroutine)
+        {
+            StopCoroutine(FireCoroutine);
+            InFireCoroutine = false;
+        }
+        GameObject WpGO = GameObject.Instantiate(weaponPrefab);
+        WeaponBulletMgr newWeapon = WpGO.GetComponent<WeaponBulletMgr>();
+        if (newWeapon == null)
+        {
+            throw new Exception("ChangeWeapon: prefab is not a weapon bullet manager!");
+        }
+        newWeapon.SetOwner(gameObject, weaponPos);
+        if (Weapon != null)
+        {
+            Destroy(Weapon.gameObject);
+        }
+        Weapon = newWeapon;
+        guideMgr.SetWeapon(Weapon);
+
+        _firingTime = 0f;
+    }
+
+    public void ResetWeapon()
+    {
+        ChangeWeapon(WeaponPrefabs[0]);
+    }
     #endregion
 
     #region Collision

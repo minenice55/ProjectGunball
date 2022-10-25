@@ -748,7 +748,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3486754957811983803}
-  m_LocalRotation: {x: -0.30129132, y: 2.3797617e-15, z: 2.754772e-15, w: 0.9535322}
+  m_LocalRotation: {x: -0.30129138, y: -0.000000040188375, z: -0.000000012698483,
+    w: 0.95353216}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -952,8 +953,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6316839412420986418}
-  m_LocalRotation: {x: -0.05744882, y: 0.000000034455983, z: 0.0000000019827302, w: 0.9983485}
-  m_LocalPosition: {x: 0, y: 1, z: -6}
+  m_LocalRotation: {x: 0.025091238, y: 0.000000004300241, z: -1.0793234e-10, w: 0.9996852}
+  m_LocalPosition: {x: 0, y: 2, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 7894551172962287702}
@@ -1475,7 +1476,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8122331631708433126}
-  m_LocalRotation: {x: 0.025091244, y: -0.0000000021501205, z: 5.3966193e-11, w: 0.99968517}
+  m_LocalRotation: {x: 0.02509124, y: 0.00000000215012, z: -5.396617e-11, w: 0.99968517}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1737,6 +1738,7 @@ MonoBehaviour:
   playerCameraTarget: {fileID: 6532357023631042641}
   weaponPos: {fileID: 597372343696887889}
   vsBallPos: {fileID: 8462955016767658057}
+  vsWpnBallPos: {fileID: 1989388466079014238}
   playerCineCamera: {fileID: 6859216385283850612}
   visualModel: {fileID: 6944341138743339369}
   playPrm:
@@ -1758,9 +1760,11 @@ MonoBehaviour:
   guideMgr: {fileID: 1543995061396109815}
   aimOffset: {x: 0.04, y: 0.075, z: 0}
   _playCollider: {fileID: 5849407277201220526}
+  WeaponPrefabs: []
   IsOnGround: 0
   IsJumping: 0
   Weapon: {fileID: 0}
+  InFireCoroutine: 0
 --- !u!136 &7171178101128612114
 CapsuleCollider:
   m_ObjectHideFlags: 0

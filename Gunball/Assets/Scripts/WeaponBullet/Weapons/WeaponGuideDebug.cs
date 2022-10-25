@@ -44,6 +44,7 @@ public class WeaponGuideDebug : WeaponBulletMgr
     }
 
     public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
+    public override float GetGuideWidth() { return GuidePrm.GuideWidth; }
 
     public override void CreateWeaponBullet(Player player)
     {

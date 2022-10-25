@@ -12,6 +12,8 @@ public class WeaponBulletMgr : MonoBehaviour
     [SerializeField] protected Transform BulletSpawnPos;
 
     [SerializeField] protected GameObject BulletObject;
+
+    public Vector3 FacingDirection {get {return facingDirection;}}
     
     public Collider[] IgnoreColliders;
     protected Vector3 facingDirection;
@@ -41,7 +43,8 @@ public class WeaponBulletMgr : MonoBehaviour
 
     #region Virtual Methods
     public virtual void StartFireSequence(Player player) {
-        owner.StartCoroutine(DoFireSequence(player));
+        owner.FireCoroutine = DoFireSequence(owner);
+        owner.StartCoroutine(owner.FireCoroutine);
     }
     public virtual IEnumerator DoFireSequence(Player player)
     {
@@ -49,7 +52,7 @@ public class WeaponBulletMgr : MonoBehaviour
         yield return new WaitForSeconds(WpPrm.PreDelayTime);
         CreateWeaponBullet(player);
         player.InFireCoroutine = false;
-    } 
+    }
     public virtual void CreateWeaponBullet(Player player) {}
     public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm) {
         if (heldDuration <= 0 && relaxDuration > 0)
@@ -71,8 +74,10 @@ public class WeaponBulletMgr : MonoBehaviour
 
     public virtual Vector3[] GetGuideCastPoints() { return new Vector3[]{RootSpawnPos.position, BulletSpawnPos.position}; }
     public virtual float GetGuideRadius() { return 0f; }
+    public virtual float GetGuideWidth() { return 0f; }
     public virtual GuideType GetGuideType() { return GuideType.None; }
     public virtual LayerMask GetGuideCollisionMask() { return new LayerMask(); }
+    public virtual Vector3 OverrideSpawnPos() { return BulletSpawnPos.position; }
     #endregion
     
     #region Parameter Structs

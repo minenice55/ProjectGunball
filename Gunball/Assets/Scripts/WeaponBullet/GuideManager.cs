@@ -116,11 +116,11 @@ public class GuideManager : MonoBehaviour
 
     void DrawTrajectoryGuide(Vector3[] points)
     {
-        if (Wpn.GetGuideRadius() <= 0) return;
+        if (Wpn.GetGuideWidth() <= 0) return;
         List<Vector3> trajectoryPoints = new List<Vector3>();
         Vector3 endPos = CastGuide(out PredictionPos, out int LastPoint, points);
-        trajectoryRenderer.startWidth = Wpn.GetGuideRadius();
-        trajectoryRenderer.endWidth = Wpn.GetGuideRadius();
+        trajectoryRenderer.startWidth = Wpn.GetGuideWidth();
+        trajectoryRenderer.endWidth = Wpn.GetGuideWidth();
         //add points in reverse
         trajectoryPoints.Add(endPos);
         trajectoryPoints.Add(Vector3.MoveTowards(endPos, points[LastPoint], 0.01f));
