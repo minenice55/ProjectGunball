@@ -44,32 +44,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cda775e346985e04fbbe26a4fc883095, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  WpPrm:
+    MaxAmmo: 0
+    AmmoClip: 0
+    AmmoConsume: 0
+    PreDelayTime: 0
+    RepeatTime: 0.13333334
+    RunSpeedOverride: 0
+    AirSpeedOverride: 0
   RootSpawnPos: {fileID: 0}
   BulletSpawnPos: {fileID: 0}
   BulletObject: {fileID: 1042726209451766694, guid: c407532cd99036e4abc26f38f59158ca,
     type: 3}
-  IgnoreColliders: []
+  IgnoreColliders:
+  - {fileID: 0}
+  - {fileID: 0}
   GuidePrm:
     ShotGuideSecs: 1
+    GuideRadius: 0.2
     GuideWidth: 0
-    ShotGuideType: 1
+    ShotGuideType: 3
   ColPrm:
-    InitRadiusField: 0.1
+    InitRadiusField: 0.2
     InitRadiusPlayer: 0.2
-    EndRadiusField: 0.5
-    EndRadiusPlayer: 0.6
-    GuideRadius: 0
+    EndRadiusField: 0.2
+    EndRadiusPlayer: 0.2
+    GuideRadius: 0.2
     CollisionMask:
       serializedVersion: 2
-      m_Bits: 14080
+      m_Bits: 14208
+    FriendlyFireIgnoreTime: 0
   MovePrm:
-    SpawnSpeed: 48
-    ToGravityTime: 32
-    GravitySpeed: 0
-    Gravity: 0
-    GravityDragRatio: 1
+    SpawnSpeed: 132
+    ToGravityTime: 0.06666667
+    GravitySpeed: 86.97
+    Gravity: 18
+    GravityDragRatio: 24
   DmgPrm:
     DamageMax: 80
     DamageMin: 50
     ReduceStartTime: 0.5
     ReduceEndTime: 1
+    Knockback:
+      Force: 4
+      Radius: 0
+      DistanceBias: 0
+      PlayerBias: 0.2
+      VsBallBias: 1
+      MapObjectBias: 0.25

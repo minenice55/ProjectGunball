@@ -6,12 +6,12 @@ public class BulletRocket : BulletBase
 {
     [SerializeField] GameObject BlastPrefab;
     WeaponBulletMgr.MoveBlastParam BlastParam;
-    public void SetupBullet(Transform weaponPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
+    public void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
         WeaponBulletMgr.CollisionParam colPrm, 
         WeaponBulletMgr.MoveBlastParam movePrm, 
         WeaponBulletMgr.DamageParam dmgPrm )
     {
-        base.SetupBullet(weaponPos, facing, owner, ignoreColliders, colPrm, movePrm.MoveSimpleParam, dmgPrm);
+        base.SetupBullet(weaponPos, playRootPos, facing, owner, ignoreColliders, colPrm, movePrm.MoveSimpleParam, dmgPrm);
         BlastParam = movePrm;
         transform.forward = facing;
     }
@@ -20,6 +20,7 @@ public class BulletRocket : BulletBase
         float _dt = Time.deltaTime;
         Vector3 nextPos;
         Vector3 colPos;
+        RaycastHit hit;
         castPoints = DoBulletMove(_dt, out nextPos);
         if (BlastParam.DieOnGravityState && lifeTime >= BlastParam.MoveSimpleParam.ToGravityTime + BlastParam.DieOnGravityTime)
         {
@@ -30,9 +31,9 @@ public class BulletRocket : BulletBase
         }
         else if (castPoints != null)
         {
-            if (CheckBulletCollision(castPoints, out colPos))
+            if (CheckBulletCollision(castPoints, out colPos, out hit))
             {
-                DoOnCollisionKill(colPos);
+                DoOnCollisionKill(colPos, hit);
                 Destroy(gameObject);
             }
             else
@@ -44,8 +45,17 @@ public class BulletRocket : BulletBase
         }
     }
 
+    protected override void DoOnCollisionKill(Vector3 pos, RaycastHit hit)
+    {
+        base.DoOnCollisionKill(pos, hit);
+        GameObject.Instantiate(BlastPrefab, pos, Quaternion.identity);
+        BulletBlast blast = BlastPrefab.GetComponent<BulletBlast>();
+        blast.DoBlast(BlastParam.BlastSimpleParam, pos);
+    }
+
     protected override void DoOnCollisionKill(Vector3 pos)
     {
+        base.DoOnCollisionKill(pos);
         GameObject.Instantiate(BlastPrefab, pos, Quaternion.identity);
         BulletBlast blast = BlastPrefab.GetComponent<BulletBlast>();
         blast.DoBlast(BlastParam.BlastSimpleParam, pos);

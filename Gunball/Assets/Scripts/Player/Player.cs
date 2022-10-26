@@ -3,55 +3,86 @@ using System.Collections;
 using UnityEngine;
 using Cinemachine;
 
-public class Player : MonoBehaviour, IKnocbackableObject
+public class Player : MonoBehaviour, IShootableObject
 {
+    [System.Flags]
+    public enum FiringType
+    {
+        Primary = 1<<0,
+        Secondary = 1<<1,
+        Super = 1<<2
+    }
+
     #region Serialized Components
     [SerializeField] Camera playerCamera;
     [SerializeField] Transform playerCameraTarget;
     [SerializeField] Transform weaponPos;
+    [SerializeField] Transform vsBallPos;
+    [SerializeField] Transform vsWpnBallPos;
     [SerializeField] CinemachineFreeLook playerCineCamera;
     [SerializeField] GameObject visualModel;
     [SerializeField] PlayerParameters playPrm;
     [SerializeField] LayerMask gndCollisionFlags;
     [SerializeField] GuideManager guideMgr;
     [SerializeField] Vector3 aimOffset;
+    [SerializeField] CapsuleCollider _playCollider;
+    [SerializeField] GameObject[] WeaponPrefabs;
     #endregion
 
     #region Public Variables
-    public Vector3 Velocity { get { return _playController.velocity; } }
+    [NonSerialized] public WeaponBulletMgr Weapon;
     public bool IsOnGround;
     public bool IsJumping;
-    public WeaponBulletMgr Weapon;
+
+    public IEnumerator FireCoroutine;
+    public bool InFireCoroutine = false;
     #endregion
 
     #region Private Variables
-    bool _canJump, _isOnSlope, _isOnSlopeSteep;
+    float _hp;
+    bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
     float _dt;
+    float _firingTime;
+    float _fireRelaxTime = Single.MaxValue;
     float coyoteTimer, requestMoveTimer;
     Rigidbody _playController;
-    CapsuleCollider _playCollider;
     Vector3 _input;
     Vector3 _gndNormal;
     RaycastHit _gndHit;
-    float currentFloorFriction;
     Quaternion _onJmpRotation;
+    FiringType _fireKeys;
+    #endregion
+
+    #region Public Properties
+    public Vector3 Velocity { get { return _playController.velocity; } }
+    public float Health { get { return _hp; } set { _hp = value; } }
+    public bool IsDead { get { return _hp <= 0; } }
+    public Transform Transform { get { return transform; } }
+    public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
+    public Transform BallPickupPos {get => vsBallPos;}
+    public Transform BallSpawnPos {get => vsWpnBallPos;}
+    public FiringType CurrentFireKeys {get => _fireKeys;}
+    public bool InAction {get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0;}
     #endregion
 
 
     #region Built-Ins
     void Start()
     {
-        _canJump = true;
         _playController = GetComponent<Rigidbody>();
-        _playCollider = GetComponent<CapsuleCollider>();
 
-        Weapon.SetOwner(gameObject, weaponPos);
-        guideMgr.SetWeapon(Weapon);
+        ChangeWeapon(WeaponPrefabs[0]);
         guideMgr.SetCamera(playerCamera);
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
+        //TEMPORARY
+        if (Input.GetKey(KeyCode.Escape))
+            Cursor.lockState = CursorLockMode.None;
+
+        _fireKeys = 0;
         PollInput();
         TickTimers();
         DoPlayerMovement();
@@ -63,10 +94,52 @@ public class Player : MonoBehaviour, IKnocbackableObject
 
         guideMgr.UpdateGuide();
 
-        if (Input.GetButtonDown("Attack"))
+        if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
         {
-            Weapon.FireWeaponBullet(this);
+            _fireRelaxTime = 0f;
+            Weapon.StartFireSequence(this);
         }
+        else if (_firingTime > 0)
+        {
+            _fireRelaxTime += _dt;
+        }
+    }
+
+    public void ChangeWeapon(GameObject weaponPrefab)
+    {
+        if (Input.GetButton("Attack"))
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            _onWpSwitchBlock = true;
+        }
+        if (InFireCoroutine)
+        {
+            StopCoroutine(FireCoroutine);
+            FireCoroutine = null;
+            InFireCoroutine = false;
+        }
+        GameObject WpGO = GameObject.Instantiate(weaponPrefab);
+        WeaponBulletMgr newWeapon = WpGO.GetComponent<WeaponBulletMgr>();
+        if (newWeapon == null)
+        {
+            Weapon = null;
+            guideMgr.SetWeapon(Weapon);
+            throw new Exception("ChangeWeapon: prefab is not a weapon bullet manager!");
+        }
+        newWeapon.SetOwner(gameObject, weaponPos);
+        if (Weapon != null)
+        {
+            Destroy(Weapon.gameObject);
+        }
+        Weapon = newWeapon;
+        guideMgr.SetWeapon(Weapon);
+
+        // _firingTime = 0f;
+    }
+
+    public void ResetWeapon()
+    {
+        ChangeWeapon(WeaponPrefabs[0]);
     }
     #endregion
 
@@ -103,7 +176,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
         _gndNormal = _gndHit.normal;
         float ang = Vector3.Angle(Vector3.up, _gndNormal);
         _isOnSlope = ang <= playPrm.Gnd_SlopeLimit && ang != 0f;
-        _isOnSlopeSteep = ang > playPrm.Gnd_SlopeLimit;
+        _isOnSlopeSteep = ang > playPrm.Gnd_SlopeLimit && ang < 90f;
     }
     #endregion
 
@@ -114,11 +187,30 @@ public class Player : MonoBehaviour, IKnocbackableObject
         if (coyoteTimer > 0)
             coyoteTimer = Mathf.Max(coyoteTimer - _dt, 0);
 
-        if (_input.magnitude > 0.05f && Math.Abs(playerCineCamera.m_XAxis.m_InputAxisValue) <= 0.05f && !UnityEngine.Input.GetButton("Attack"))
+        if (Input.GetButton("Attack"))
+        {
+            if (!_onWpSwitchBlock)
+            {
+                _fireKeys |= FiringType.Primary;
+                _firingTime += _dt;
+            }
+            else
+            {
+                _firingTime = 0f;
+                _fireRelaxTime += _dt;
+            }
+        }
+        else
+        {
+            if (_onWpSwitchBlock) _onWpSwitchBlock = false;
+            _firingTime = 0f;
+            _fireRelaxTime += _dt;
+        }
+
+        if (_input.magnitude > 0.05f && Math.Abs(playerCineCamera.m_XAxis.m_InputAxisValue) <= 0.05f && _firingTime <= 0f)
             requestMoveTimer += _dt;
         else
             requestMoveTimer = 0f;
-
     }
 
     void PollInput()
@@ -150,16 +242,16 @@ public class Player : MonoBehaviour, IKnocbackableObject
             _onJmpRotation = Quaternion.Euler(0, visualModel.transform.rotation.eulerAngles.y, 0);
         }
 
-        if (Input.GetKeyDown(KeyCode.Space) && (IsOnGround || coyoteTimer > 0) && !IsJumping)
+        if (Input.GetButtonDown("Jump") && !IsJumping && (IsOnGround || coyoteTimer > 0))
         {
             DoJump();
         }
-        if (Input.GetKeyUp(KeyCode.Space) && Velocity.y > playPrm.Jump_Shortening && IsJumping && !IsOnGround)
+        if (Input.GetButtonUp("Jump") && IsJumping && !IsOnGround && Velocity.y > playPrm.Jump_Shortening)
         {
             DoJumpShortening();
         }
         
-        bool attacking = UnityEngine.Input.GetButton("Attack");
+        bool attacking = Weapon.GetPlayerInAction();
         if (_input.magnitude > 0f)
         {
             if (!attacking)
@@ -232,7 +324,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
             }
             else
             {
-                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 10f);
+                Quaternion targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 32f);
                 visualModel.transform.rotation = Quaternion.Slerp(visualModel.transform.rotation, targetRot, 8f * _dt);
             }
         }
@@ -251,8 +343,8 @@ public class Player : MonoBehaviour, IKnocbackableObject
         }
 
         //get angle between velocity and input
-        float mag = Vector3.Project(vel, moveDir.normalized).magnitude;
-        Debug.Log(mag);
+        float a = Vector3.Angle(vel, moveDir.normalized * accel);
+        float mag = vel.magnitude * Mathf.Cos(a * Mathf.Deg2Rad);
         if (mag < speed - (accel*_dt))
         {
             _playController.AddForce(moveDir.normalized * accel, ForceMode.Force);
@@ -310,7 +402,7 @@ public class Player : MonoBehaviour, IKnocbackableObject
         public static Quaternion TiltRotationTowardsVelocity( Quaternion cleanRotation, Vector3 referenceUp, Vector3 vel, float velMagFor45Degree )
         {
             Vector3 rotAxis = Vector3.Cross( referenceUp, vel );
-            float tiltAngle = Mathf.Min(Mathf.Atan( vel.magnitude / velMagFor45Degree) * Mathf.Rad2Deg, 22.5f);
+            float tiltAngle = Mathf.Atan( vel.magnitude / velMagFor45Degree) * Mathf.Rad2Deg;
             return Quaternion.AngleAxis( tiltAngle, rotAxis ) * cleanRotation;    //order matters
         }
     #endregion
@@ -318,7 +410,20 @@ public class Player : MonoBehaviour, IKnocbackableObject
     #region Inherited Methods
         public void Knockback(Vector3 force, Vector3 pos)
         {
+            IsJumping = false;
             _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
+        }
+
+        public void DoDamage(float damage, Player source = null)
+        {
+            // log damage
+            Debug.Log("Took " + damage + " damage");
+        }
+
+        public void RecoverDamage(float healing, Player source = null)
+        {
+            // log recovery
+            Debug.Log("Recovered " + healing + " damage");
         }
     #endregion
 
