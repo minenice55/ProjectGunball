@@ -21,6 +21,21 @@ public class WeaponVsBall : WeaponBulletMgr
         return MovePrm.SpawnSpeed;
     }
 
+    public override bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm) {
+        if (heldDuration <= 0 && relaxDuration > 0)
+        {
+            nextFireTime = 0;
+            return false;
+        }
+        lastActionTime = Time.time;
+        if (heldDuration >= nextFireTime)
+        {
+            nextFireTime = heldDuration + wpPrm.RepeatTime;
+            return true;
+        }
+        return false;
+    }
+
     public override GuideType GetGuideType()
     {
         return GuidePrm.ShotGuideType;
@@ -47,5 +62,16 @@ public class WeaponVsBall : WeaponBulletMgr
     public override void CreateWeaponBullet(Player player)
     {
         ball.EndEffect();
+    }
+
+    public override IEnumerator DoFireSequence(Player player)
+    {
+        player.InFireCoroutine = true;
+        yield return new WaitForSeconds(WpPrm.PreDelayTime);
+        CreateWeaponBullet(player);
+
+        ball.ResetOwner();
+        player.ResetWeapon();
+        player.InFireCoroutine = false;
     }
 }

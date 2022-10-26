@@ -98,9 +98,14 @@ public class GunBall : MonoBehaviour, IShootableObject, IPickup
         lastThrowTime = Time.time;
 
         _rigidbody.velocity = wp.FacingDirection * wp.GetSpawnSpeed() + _owner.Velocity;
-
-        _owner.ResetWeapon();
         _owner = null;
+    }
+
+    public void ResetOwner()
+    {
+        _owner = null;
+        _rigidbody.isKinematic = false;
+        transform.localScale = origScale;
     }
 
     public static Vector3 TryBulletMove(Vector3 bulletSpawnPos, Vector3 force, float drag, out Vector3[] segments)

@@ -48,7 +48,7 @@ MonoBehaviour:
     AmmoClip: 0
     AmmoConsume: 0
     PreDelayTime: 0.13333334
-    RepeatTime: 0
+    RepeatTime: 99999
     RunSpeedOverride: 0
     AirSpeedOverride: 0
   RootSpawnPos: {fileID: 0}

@@ -27,7 +27,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -89,20 +88,20 @@ MonoBehaviour:
       - BlastRadius: 1.5
         BlastDamage: 25
         Knockback:
-          Force: 15
+          Force: 10
           Radius: 2
           DistanceBias: 1
           PlayerBias: 1
-          VsBallBias: 0.5
+          VsBallBias: 0.4
           MapObjectBias: 0.25
       - BlastRadius: 4
         BlastDamage: 10
         Knockback:
-          Force: 9
+          Force: 8
           Radius: 5
           DistanceBias: 1
           PlayerBias: 1
-          VsBallBias: 1.25
+          VsBallBias: 0.5
           MapObjectBias: 0.25
   DmgPrm:
     DamageMax: 75
@@ -110,7 +109,7 @@ MonoBehaviour:
     ReduceStartTime: 0.6
     ReduceEndTime: 1
     Knockback:
-      Force: 32
+      Force: 16
       Radius: 0
       DistanceBias: 0
       PlayerBias: 0

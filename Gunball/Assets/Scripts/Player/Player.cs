@@ -40,7 +40,7 @@ public class Player : MonoBehaviour, IShootableObject
 
     #region Private Variables
     float _hp;
-    bool _isOnSlope, _isOnSlopeSteep;
+    bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
     float _dt;
     float _firingTime;
     float _fireRelaxTime = Single.MaxValue;
@@ -73,10 +73,15 @@ public class Player : MonoBehaviour, IShootableObject
 
         ChangeWeapon(WeaponPrefabs[0]);
         guideMgr.SetCamera(playerCamera);
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
+        //TEMPORARY
+        if (Input.GetKey(KeyCode.Escape))
+            Cursor.lockState = CursorLockMode.None;
+
         _fireKeys = 0;
         PollInput();
         TickTimers();
@@ -102,15 +107,23 @@ public class Player : MonoBehaviour, IShootableObject
 
     public void ChangeWeapon(GameObject weaponPrefab)
     {
+        if (Input.GetButton("Attack"))
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            _onWpSwitchBlock = true;
+        }
         if (InFireCoroutine)
         {
             StopCoroutine(FireCoroutine);
+            FireCoroutine = null;
             InFireCoroutine = false;
         }
         GameObject WpGO = GameObject.Instantiate(weaponPrefab);
         WeaponBulletMgr newWeapon = WpGO.GetComponent<WeaponBulletMgr>();
         if (newWeapon == null)
         {
+            Weapon = null;
+            guideMgr.SetWeapon(Weapon);
             throw new Exception("ChangeWeapon: prefab is not a weapon bullet manager!");
         }
         newWeapon.SetOwner(gameObject, weaponPos);
@@ -121,7 +134,7 @@ public class Player : MonoBehaviour, IShootableObject
         Weapon = newWeapon;
         guideMgr.SetWeapon(Weapon);
 
-        _firingTime = 0f;
+        // _firingTime = 0f;
     }
 
     public void ResetWeapon()
@@ -174,13 +187,22 @@ public class Player : MonoBehaviour, IShootableObject
         if (coyoteTimer > 0)
             coyoteTimer = Mathf.Max(coyoteTimer - _dt, 0);
 
-        if (UnityEngine.Input.GetButton("Attack"))
+        if (Input.GetButton("Attack"))
         {
-            _fireKeys |= FiringType.Primary;
-            _firingTime += _dt;
+            if (!_onWpSwitchBlock)
+            {
+                _fireKeys |= FiringType.Primary;
+                _firingTime += _dt;
+            }
+            else
+            {
+                _firingTime = 0f;
+                _fireRelaxTime += _dt;
+            }
         }
         else
         {
+            if (_onWpSwitchBlock) _onWpSwitchBlock = false;
             _firingTime = 0f;
             _fireRelaxTime += _dt;
         }
