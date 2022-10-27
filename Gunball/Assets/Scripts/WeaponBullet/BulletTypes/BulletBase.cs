@@ -126,6 +126,7 @@ public class BulletBase : MonoBehaviour
                 {
                     if (hitsBuffer[j].collider != null)
                     {
+                         
                         //first check if is none type of IShootableObject
                         IShootableObject shootable = hitsBuffer[j].collider.gameObject.GetComponent<IShootableObject>();
                         if (shootable != null)

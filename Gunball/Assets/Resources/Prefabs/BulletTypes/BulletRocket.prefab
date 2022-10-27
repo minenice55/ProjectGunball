@@ -10,9 +10,10 @@ GameObject:
   m_Component:
   - component: {fileID: 4767163861580361358}
   - component: {fileID: 6382894234260295638}
+  - component: {fileID: 4719026634532519875}
   m_Layer: 0
   m_Name: BulletRocket
-  m_TagString: Untagged
+  m_TagString: VsBall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -45,8 +46,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 462702673814eab4798ae9d14516813e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BlastPrefab: {fileID: 4266941966911170520, guid: dca6b372845aa46478a82118a689f766,
-    type: 3}
+  BlastPrefab: {fileID: 4266941966911170520, guid: dca6b372845aa46478a82118a689f766, type: 3}
+--- !u!135 &4719026634532519875
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568297050330448013}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &938272431152101003
 GameObject:
   m_ObjectHideFlags: 0
