@@ -3,43 +3,46 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum Side
+namespace Gunball.Interface
 {
-    A_Side,
-    B_Side
-}
-
-public class ScoringSystem : MonoBehaviour
-{
-    public int SideAScore, SideBScore;
-
-    public Text SideATxt, SideBTxt;
-
-    public void Awake()
+    public enum Side
     {
-        SideAScore = 0;
-        SideBScore = 0;
-
-        UpdateTxt();
+        A_Side,
+        B_Side
     }
 
-    public void SetScore(int Score,Side _side)
+    public class ScoringSystem : MonoBehaviour
     {
-        if (_side == Side.A_Side)
-            SideAScore += Score;
-        else
-            SideBScore += Score;
+        public int SideAScore, SideBScore;
 
-        UpdateTxt();
-    }
+        public Text SideATxt, SideBTxt;
 
-    void UpdateTxt()
-    {
-        SideATxt.text = SideAScore.ToString();
-        SideBTxt.text = SideBScore.ToString();
+        public void Awake()
+        {
+            SideAScore = 0;
+            SideBScore = 0;
 
-        print("Side A Score : " + SideAScore.ToString());
-        print("Side B Score : " + SideBScore.ToString());
+            UpdateTxt();
+        }
 
+        public void SetScore(int Score, Side _side)
+        {
+            if (_side == Side.A_Side)
+                SideAScore += Score;
+            else
+                SideBScore += Score;
+
+            UpdateTxt();
+        }
+
+        void UpdateTxt()
+        {
+            SideATxt.text = SideAScore.ToString();
+            SideBTxt.text = SideBScore.ToString();
+
+            print("Side A Score : " + SideAScore.ToString());
+            print("Side B Score : " + SideBScore.ToString());
+
+        }
     }
 }

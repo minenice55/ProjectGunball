@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - VsBall
+  - goal
   layers:
   - Default
   - TransparentFX
@@ -24,7 +25,7 @@ TagManager:
   - 
   - WpBullet
   - 
-  - 
+  - Goal
   - 
   - 
   - 

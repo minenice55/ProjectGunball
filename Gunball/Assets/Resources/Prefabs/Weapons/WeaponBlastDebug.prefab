@@ -85,23 +85,23 @@ MonoBehaviour:
     BlastSimpleParam:
       DamageLinear: 0
       DistanceDamage:
-      - BlastRadius: 1.5
+      - BlastRadius: 2
         BlastDamage: 25
         Knockback:
-          Force: 10
+          Force: 15
           Radius: 2
           DistanceBias: 1
           PlayerBias: 1
-          VsBallBias: 0.4
+          VsBallBias: 0.75
           MapObjectBias: 0.25
-      - BlastRadius: 4
+      - BlastRadius: 5
         BlastDamage: 10
         Knockback:
-          Force: 8
+          Force: 10
           Radius: 5
           DistanceBias: 1
           PlayerBias: 1
-          VsBallBias: 0.5
+          VsBallBias: 0.8
           MapObjectBias: 0.25
   DmgPrm:
     DamageMax: 75
@@ -109,7 +109,7 @@ MonoBehaviour:
     ReduceStartTime: 0.6
     ReduceEndTime: 1
     Knockback:
-      Force: 16
+      Force: 20
       Radius: 0
       DistanceBias: 0
       PlayerBias: 0
