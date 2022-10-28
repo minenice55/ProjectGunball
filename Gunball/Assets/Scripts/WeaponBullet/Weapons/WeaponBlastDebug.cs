@@ -1,57 +1,61 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class WeaponBlastDebug : WeaponBulletMgr
+using Gunball.WeaponSystem;
+using Gunball.MapObject;
+namespace Gunball.WeaponSystem
 {
-    [SerializeField] GuideParam GuidePrm;
-    [SerializeField] CollisionParam ColPrm;
-    [SerializeField] MoveBlastParam BlastPrm;
-    [SerializeField] DamageParam DmgPrm;
-
-    MoveSimpleParam MovePrm { get { return BlastPrm.MoveSimpleParam; } }
-
-    public override GuideType GetGuideType()
+    public class WeaponBlastDebug : WeaponBulletMgr
     {
-        return GuidePrm.ShotGuideType;
-    }
+        [SerializeField] GuideParam GuidePrm;
+        [SerializeField] CollisionParam ColPrm;
+        [SerializeField] MoveBlastParam BlastPrm;
+        [SerializeField] DamageParam DmgPrm;
 
-    public override Vector3[] GetGuideCastPoints()
-    {
-        float counter = Mathf.Min(MovePrm.ToGravityTime, GuidePrm.ShotGuideSecs);
-        List<Vector3> points = new List<Vector3>();
-        Vector3 currPos = BulletSpawnPos.position;
-        Vector3[] castPoints;
-        currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, RootSpawnPos.position, currPos, facingDirection, 0, counter, MovePrm, out castPoints);
-        foreach (Vector3 p in castPoints)
+        MoveSimpleParam MovePrm { get { return BlastPrm.MoveSimpleParam; } }
+
+        public override GuideType GetGuideType()
         {
-            points.Add(p);
+            return GuidePrm.ShotGuideType;
         }
 
-        while (counter < GuidePrm.ShotGuideSecs)
+        public override Vector3[] GetGuideCastPoints()
         {
-            currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, RootSpawnPos.position, currPos, facingDirection, counter, STEP_TIME, MovePrm, out castPoints);
+            float counter = Mathf.Min(MovePrm.ToGravityTime, GuidePrm.ShotGuideSecs);
+            List<Vector3> points = new List<Vector3>();
+            Vector3 currPos = BulletSpawnPos.position;
+            Vector3[] castPoints;
+            currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, RootSpawnPos.position, currPos, facingDirection, 0, counter, MovePrm, out castPoints);
             foreach (Vector3 p in castPoints)
             {
                 points.Add(p);
             }
-            counter += STEP_TIME;
+
+            while (counter < GuidePrm.ShotGuideSecs)
+            {
+                currPos = BulletBase.TryBulletMove(BulletSpawnPos.position, RootSpawnPos.position, currPos, facingDirection, counter, STEP_TIME, MovePrm, out castPoints);
+                foreach (Vector3 p in castPoints)
+                {
+                    points.Add(p);
+                }
+                counter += STEP_TIME;
+            }
+            return points.ToArray();
         }
-        return points.ToArray();
-    }
 
-    public override LayerMask GetGuideCollisionMask()
-    {
-        return ColPrm.CollisionMask;
-    }
+        public override LayerMask GetGuideCollisionMask()
+        {
+            return ColPrm.CollisionMask;
+        }
 
-    public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
+        public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
 
-    public override void CreateWeaponBullet(Player player)
-    {
-        GameObject bullet = Instantiate(BulletObject, BulletSpawnPos.position, Quaternion.identity);
-        BulletRocket bulletBase = bullet.GetComponent<BulletRocket>();
-        bulletBase.SetupBullet(BulletSpawnPos, RootSpawnPos, facingDirection, player, IgnoreColliders, ColPrm, BlastPrm, DmgPrm);
-        bullet.SetActive(true);
+        public override void CreateWeaponBullet(Player player)
+        {
+            GameObject bullet = Instantiate(BulletObject, BulletSpawnPos.position, Quaternion.identity);
+            BulletRocket bulletBase = bullet.GetComponent<BulletRocket>();
+            bulletBase.SetupBullet(BulletSpawnPos, RootSpawnPos, facingDirection, player, IgnoreColliders, ColPrm, BlastPrm, DmgPrm);
+            bullet.SetActive(true);
+        }
     }
 }
