@@ -88,8 +88,8 @@ namespace Gunball.MapObject
             _hp = playPrm.Max_Health;
             _playController = GetComponent<Rigidbody>();
 
-            ChangeWeapon(WeaponPrefabs[0]);
             guideMgr.SetCamera(playerCamera);
+            ChangeWeapon(WeaponPrefabs[0]);
             Cursor.lockState = CursorLockMode.Locked;
         }
 
