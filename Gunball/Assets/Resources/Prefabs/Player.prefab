@@ -476,7 +476,7 @@ GameObject:
   - component: {fileID: 6859216385283850612}
   - component: {fileID: 3468176797265894203}
   m_Layer: 0
-  m_Name: CameraController
+  m_Name: Cam_Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -515,7 +515,7 @@ MonoBehaviour:
   - m_Script
   m_LockStageInInspector: 
   m_StreamingVersion: 20170927
-  m_Priority: 10
+  m_Priority: 1
   m_StandbyUpdate: 2
   m_LookAt: {fileID: 6532357023631042641}
   m_Follow: {fileID: 7894551172962287702}
@@ -953,8 +953,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6316839412420986418}
-  m_LocalRotation: {x: 0.025091238, y: 0.000000004300241, z: -1.0793234e-10, w: 0.9996852}
-  m_LocalPosition: {x: 0, y: 2, z: -6}
+  m_LocalRotation: {x: -0.05744882, y: 0.000000034623287, z: 0.0000000019923574, w: 0.9983485}
+  m_LocalPosition: {x: 0, y: 1, z: -51}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 7894551172962287702}
@@ -1038,7 +1038,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-  m_CustomBlends: {fileID: 0}
+  m_CustomBlends: {fileID: 11400000, guid: e1c920a41d8eb5d4fb52cf1dc98fd283, type: 2}
   m_CameraCutEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -1742,6 +1742,7 @@ MonoBehaviour:
   playerCineCamera: {fileID: 6859216385283850612}
   visualModel: {fileID: 6944341138743339369}
   playPrm:
+    Max_Health: 100
     Move_RunSpeed: 7
     Move_RunAccel: 16
     Move_AirSpeed: 2.5
@@ -1761,10 +1762,6 @@ MonoBehaviour:
   aimOffset: {x: 0.04, y: 0.075, z: 0}
   _playCollider: {fileID: 5849407277201220526}
   WeaponPrefabs: []
-  IsOnGround: 0
-  IsJumping: 0
-  Weapon: {fileID: 0}
-  InFireCoroutine: 0
 --- !u!136 &7171178101128612114
 CapsuleCollider:
   m_ObjectHideFlags: 0

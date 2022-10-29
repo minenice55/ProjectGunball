@@ -17,6 +17,15 @@ namespace Gunball.MapObject
             Super = 1 << 2
         }
 
+        public enum PlayerState
+        {
+            Active,
+            Dead,
+            Respawn,
+            GameIntro,
+            GameResult
+        }
+
         #region Serialized Components
         [SerializeField] Camera playerCamera;
         [SerializeField] Transform playerCameraTarget;
@@ -31,15 +40,17 @@ namespace Gunball.MapObject
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
         [SerializeField] GameObject[] WeaponPrefabs;
+        [SerializeField] RespawnRammer respawnRammer;
         #endregion
 
         #region Public Variables
         [NonSerialized] public WeaponBulletMgr Weapon;
-        public bool IsOnGround;
-        public bool IsJumping;
+        [NonSerialized] public PlayerState State;
+        [NonSerialized] public bool IsOnGround;
+        [NonSerialized] public bool IsJumping;
 
-        public IEnumerator FireCoroutine;
-        public bool InFireCoroutine = false;
+        [NonSerialized] public IEnumerator FireCoroutine;
+        [NonSerialized] public bool InFireCoroutine = false;
         #endregion
 
         #region Private Variables
@@ -74,6 +85,7 @@ namespace Gunball.MapObject
         #region Built-Ins
         void Start()
         {
+            _hp = playPrm.Max_Health;
             _playController = GetComponent<Rigidbody>();
 
             ChangeWeapon(WeaponPrefabs[0]);
@@ -87,6 +99,7 @@ namespace Gunball.MapObject
             if (Input.GetKey(KeyCode.Escape))
                 Cursor.lockState = CursorLockMode.None;
 
+            //TODO: only runs if this is the local player//
             PollInput();
             TickTimers();
             if (!IsDead)
@@ -94,13 +107,13 @@ namespace Gunball.MapObject
                 DoPlayerMovement();
                 DoWeaponLogic();
             }
+            //////////////////////////
         }
 
         public void ChangeWeapon(GameObject weaponPrefab)
         {
             if (Input.GetButton("Attack"))
             {
-                Cursor.lockState = CursorLockMode.Locked;
                 _onWpSwitchBlock = true;
             }
             if (InFireCoroutine)
@@ -109,6 +122,15 @@ namespace Gunball.MapObject
                 FireCoroutine = null;
                 InFireCoroutine = false;
             }
+            if (weaponPrefab == null)
+            {
+                Destroy(Weapon.gameObject);
+                Weapon = null;
+                guideMgr.SetWeapon(Weapon);
+                guideMgr.UpdateGuide();
+                return;
+            }
+
             GameObject WpGO = GameObject.Instantiate(weaponPrefab);
             WeaponBulletMgr newWeapon = WpGO.GetComponent<WeaponBulletMgr>();
             if (newWeapon == null)
@@ -124,6 +146,7 @@ namespace Gunball.MapObject
             }
             Weapon = newWeapon;
             guideMgr.SetWeapon(Weapon);
+            guideMgr.UpdateGuide();
 
             // _firingTime = 0f;
         }
@@ -179,6 +202,8 @@ namespace Gunball.MapObject
 
             if (Input.GetButton("Attack"))
             {
+                //TEMPORARY
+                Cursor.lockState = CursorLockMode.Locked;
                 if (!_onWpSwitchBlock)
                 {
                     _fireKeys |= FiringType.Primary;
@@ -405,6 +430,25 @@ namespace Gunball.MapObject
             IsJumping = false;
             _playController.velocity = new Vector3(Velocity.x, playPrm.Jump_Shortening, Velocity.z);
         }
+
+        void SetNoClip(bool noClip = false)
+        {
+            _playController.detectCollisions = !noClip;
+            _playController.useGravity = !noClip;
+            _playController.isKinematic = noClip;
+
+            _playCollider.enabled = !noClip;
+            //disable colliders
+            foreach (Collider c in visualModel.GetComponentsInChildren<Collider>())
+            {
+                c.enabled = !noClip;
+            }
+        }
+
+        void StartRespawnSequence()
+        {
+            respawnRammer.StartRespawnSequence();
+        }
         #endregion
 
         #region Helpers
@@ -420,14 +464,16 @@ namespace Gunball.MapObject
         #region Inherited Methods
         public void Knockback(Vector3 force, Vector3 pos)
         {
+            if (IsDead) return;
             IsJumping = false;
             _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
         }
 
         public void DoDamage(float damage, Player source = null)
         {
+            if (IsDead) return;
             // log damage
-            Debug.Log("Took " + damage + " damage");
+            Debug.Log("Took " + damage + " damage. Health remaining: " + (Health - damage));
             Health -= damage;
             if (IsDead)
             {
@@ -440,6 +486,7 @@ namespace Gunball.MapObject
 
         public void RecoverDamage(float healing, Player source = null)
         {
+            if (IsDead) return;
             // log recovery
             Debug.Log("Recovered " + healing + " damage");
             Health += healing;
@@ -447,6 +494,11 @@ namespace Gunball.MapObject
 
         public void DoDeath(Player cause = null)
         {
+            ChangeWeapon(null);
+            visualModel.SetActive(false);
+            SetNoClip(true);
+            _playController.velocity = Vector3.zero;
+            Invoke("StartRespawnSequence", 1f);
             return;
         }
         #endregion
