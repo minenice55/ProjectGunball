@@ -19,12 +19,12 @@ namespace Gunball.MapObject
             {
                 goal = true;
                 FindObjectOfType<ScoringSystem>().SetScore(1, ThisSide);
-                Invoke(nameof(resetGoal), 1);
+                Invoke(nameof(ResetGoal), 1);
                 Spinner.SetTrigger("spin");
             }
         }
 
-        void resetGoal()
+        void ResetGoal()
         {
             goal = false;
         }

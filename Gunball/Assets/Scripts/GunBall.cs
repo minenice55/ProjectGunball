@@ -11,15 +11,18 @@ namespace Gunball.MapObject
     public class GunBall : MonoBehaviour, IShootableObject, IPickup
     {
         static int numSegments = 0;
-        static int maxIterations = 10000;
-        static int maxSegmentCount = 300;
-        static float segmentStepModulo = 10f;
+        static readonly int maxIterations = 10000;
+        static readonly int maxSegmentCount = 300;
+        static readonly float segmentStepModulo = 10f;
 
         float _health = 1000f;
+        [SerializeField] Vector3 SpawnPos;
         [SerializeField] Rigidbody _rigidbody;
         [SerializeField] GameObject ballBulletPrefab;
+        [SerializeField] TrailRenderer trail;
 
         #region Properties
+        public float MaxHealth => 1000f;
         public float Health { get => _health; set { _health = 1000f; } }
         public bool IsDead { get => false; }
         public Transform Transform { get => transform; }
@@ -75,6 +78,25 @@ namespace Gunball.MapObject
             return;
         }
 
+        public void DoDeath(Player cause = null)
+        {
+            trail.emitting = false;
+            if (_owner != null)
+            {
+                _owner.ResetWeapon();
+                _owner = null;
+            }
+
+            _rigidbody.velocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+            transform.localScale = origScale;
+
+            transform.position = SpawnPos;
+
+            trail.emitting = true;
+        }
+
         public void Pickup(Player player)
         {
             _owner = player;
@@ -113,6 +135,21 @@ namespace Gunball.MapObject
             _owner = null;
             _rigidbody.isKinematic = false;
             transform.localScale = origScale;
+        }
+
+        public void DeathDrop()
+        {
+            if (_owner != null)
+            {
+                _owner.ResetWeapon();
+                _owner = null;
+            }
+            transform.localScale = origScale;
+            _rigidbody.isKinematic = false;
+
+            lastThrowTime = Time.time;
+
+            _rigidbody.velocity = Vector3.up * 8f;
         }
 
         public static Vector3 TryBulletMove(Vector3 bulletSpawnPos, Vector3 force, float drag, out Vector3[] segments)
