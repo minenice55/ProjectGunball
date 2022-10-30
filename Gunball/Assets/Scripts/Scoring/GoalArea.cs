@@ -17,6 +17,9 @@ namespace Gunball.MapObject
             LayerMask ballLayer = LayerMask.GetMask("Ball");
             if (other.CompareTag("VsBall") && !goal)
             {
+                GunBall ball = other.GetComponent<GunBall>();
+                if (ball.Owner != null) return;
+                ball.DoDeath();
                 goal = true;
                 FindObjectOfType<ScoringSystem>().SetScore(1, ThisSide);
                 Invoke(nameof(ResetGoal), 1);

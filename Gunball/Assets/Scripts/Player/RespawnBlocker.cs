@@ -6,8 +6,8 @@ namespace Gunball.MapObject
 {
     public class RespawnBlocker : MonoBehaviour
     {
-        [SerializeField] Vector3 Axis;
-        [SerializeField] bool IsOOBFloor;
-        [SerializeField] bool IsFromOOBRedirector;
+        [SerializeField] public Vector3 Axis;
+        [SerializeField] public bool IsOOBFloor;
+        [SerializeField] public bool IsFromOOBRedirector;
     }
 }

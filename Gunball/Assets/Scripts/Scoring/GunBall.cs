@@ -22,8 +22,8 @@ namespace Gunball.MapObject
         [SerializeField] TrailRenderer trail;
 
         #region Properties
-        public float MaxHealth => 1000f;
-        public float Health { get => _health; set { _health = 1000f; } }
+        public float MaxHealth => 10000f;
+        public float Health { get => _health; set { _health = value; } }
         public bool IsDead { get => false; }
         public Transform Transform { get => transform; }
         public IShootableObject.ShootableType Type { get { return _owner == null ? IShootableObject.ShootableType.VsBall : IShootableObject.ShootableType.None; } }
@@ -80,26 +80,24 @@ namespace Gunball.MapObject
 
         public void DoDeath(Player cause = null)
         {
-            trail.emitting = false;
             if (_owner != null)
             {
-                _owner.ResetWeapon();
+                if (_owner != null) { _owner.VsBall = null; _owner.ResetWeapon(); }
                 _owner = null;
             }
 
-            _rigidbody.velocity = Vector3.zero;
-            _rigidbody.angularVelocity = Vector3.zero;
             transform.rotation = Quaternion.identity;
             transform.localScale = origScale;
-
             transform.position = SpawnPos;
-
-            trail.emitting = true;
+            _rigidbody.velocity = Vector3.zero;
+            _rigidbody.angularVelocity = Vector3.zero;
+            trail.Clear();
         }
 
         public void Pickup(Player player)
         {
             _owner = player;
+            _owner.VsBall = this;
 
             _owner.ChangeWeapon(ballBulletPrefab);
             ((WeaponVsBall)_owner.Weapon).SetBall(this);
@@ -127,11 +125,13 @@ namespace Gunball.MapObject
             lastThrowTime = Time.time;
 
             _rigidbody.velocity = wp.FacingDirection * wp.GetSpawnSpeed() + _owner.Velocity;
+            if (_owner != null) _owner.VsBall = null;
             _owner = null;
         }
 
         public void ResetOwner()
         {
+            if (_owner != null) _owner.VsBall = null;
             _owner = null;
             _rigidbody.isKinematic = false;
             transform.localScale = origScale;
@@ -141,7 +141,7 @@ namespace Gunball.MapObject
         {
             if (_owner != null)
             {
-                _owner.ResetWeapon();
+                if (_owner != null) { _owner.VsBall = null; _owner.ResetWeapon(); }
                 _owner = null;
             }
             transform.localScale = origScale;

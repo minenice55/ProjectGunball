@@ -51,6 +51,8 @@ namespace Gunball.MapObject
 
         [NonSerialized] public IEnumerator FireCoroutine;
         [NonSerialized] public bool InFireCoroutine = false;
+
+        [NonSerialized] public GunBall VsBall;
         #endregion
 
         #region Private Variables
@@ -66,9 +68,14 @@ namespace Gunball.MapObject
         RaycastHit _gndHit;
         Quaternion _onJmpRotation;
         FiringType _fireKeys;
+
+        float respawnRamTime = 0f;
+        Vector3 respawnStart, respawnEnd;
         #endregion
 
         #region Public Properties
+        public Vector3 CameraDirection { get { return playerCamera.transform.forward; } }
+        public CinemachineVirtualCamera CineCamera { get { return playerCineCamera.VirtualCameraGameObject.GetComponent<CinemachineVirtualCamera>(); } }
         public Vector3 Velocity { get { return _playController.velocity; } }
         public float MaxHealth { get { return playPrm.Max_Health; } }
         public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
@@ -85,12 +92,18 @@ namespace Gunball.MapObject
         #region Built-Ins
         void Start()
         {
-            _hp = playPrm.Max_Health;
+            _hp = 0;
             _playController = GetComponent<Rigidbody>();
 
             guideMgr.SetCamera(playerCamera);
-            ChangeWeapon(WeaponPrefabs[0]);
             Cursor.lockState = CursorLockMode.Locked;
+
+            // ChangeWeapon(WeaponPrefabs[0]);  // uncomment this and comment the stuff below it to start on the field
+            ChangeWeapon(null);
+            visualModel.SetActive(false);
+            SetNoClip(true);
+            _playController.velocity = Vector3.zero;
+            StartRespawnSequence();
         }
 
         void Update()
@@ -102,7 +115,7 @@ namespace Gunball.MapObject
             //TODO: only runs if this is the local player//
             PollInput();
             TickTimers();
-            if (!IsDead)
+            if ((!IsDead) && respawnRamTime <= 0f)
             {
                 DoPlayerMovement();
                 DoWeaponLogic();
@@ -124,7 +137,7 @@ namespace Gunball.MapObject
             }
             if (weaponPrefab == null)
             {
-                Destroy(Weapon.gameObject);
+                if (Weapon != null && Weapon.gameObject != null) Destroy(Weapon.gameObject);
                 Weapon = null;
                 guideMgr.SetWeapon(Weapon);
                 guideMgr.UpdateGuide();
@@ -200,6 +213,21 @@ namespace Gunball.MapObject
         {
             _dt = Time.deltaTime;
 
+            if (respawnRamTime > 0f)
+            {
+                Health = playPrm.Max_Health;
+                respawnRamTime -= _dt;
+                transform.position = Vector3.Lerp(respawnStart, respawnEnd, 1f - Mathf.Clamp01(respawnRamTime));
+                if (respawnRamTime <= 0f)
+                {
+                    FinishRespawnRam();
+                    respawnRamTime = 0f;
+                    Vector3 xzDir = respawnEnd - respawnStart;
+                    xzDir.y = 0f;
+                    _playController.velocity = xzDir.normalized * 10f + Vector3.up * 2f;
+                }
+            }
+
             if (Input.GetButton("Attack"))
             {
                 //TEMPORARY
@@ -267,7 +295,8 @@ namespace Gunball.MapObject
                 DoJumpShortening();
             }
 
-            bool attacking = Weapon.GetPlayerInAction();
+
+            bool attacking = (Weapon != null) ? Weapon.GetPlayerInAction() : Input.GetButton("Attack");
             if (_input.magnitude > 0f)
             {
                 if (!attacking)
@@ -449,6 +478,26 @@ namespace Gunball.MapObject
         {
             respawnRammer.StartRespawnSequence();
         }
+
+        public void FinishRespawnSequence(Vector3 startPos, Vector3 targetPos, float xAxis)
+        {
+            Health = playPrm.Max_Health;
+            visualModel.SetActive(true);
+            transform.position = startPos;
+            visualModel.transform.LookAt(targetPos);
+            playerCineCamera.m_XAxis.Value = xAxis;
+            respawnRamTime = 0.66f;
+            respawnStart = startPos;
+            respawnEnd = targetPos + Vector3.up * 1f;
+            CinemachineSwitcher.SwitchTo(playerCineCamera);
+        }
+
+        void FinishRespawnRam()
+        {
+            Health = playPrm.Max_Health;
+            SetNoClip(false);
+            ResetWeapon();
+        }
         #endregion
 
         #region Helpers
@@ -472,6 +521,7 @@ namespace Gunball.MapObject
         public void DoDamage(float damage, Player source = null)
         {
             if (IsDead) return;
+            if (respawnRamTime > 0f) return;
             // log damage
             Debug.Log("Took " + damage + " damage. Health remaining: " + (Health - damage));
             Health -= damage;
@@ -487,6 +537,7 @@ namespace Gunball.MapObject
         public void RecoverDamage(float healing, Player source = null)
         {
             if (IsDead) return;
+            if (respawnRamTime > 0f) return;
             // log recovery
             Debug.Log("Recovered " + healing + " damage");
             Health += healing;
@@ -494,6 +545,11 @@ namespace Gunball.MapObject
 
         public void DoDeath(Player cause = null)
         {
+            Health = 0;
+            if (VsBall != null)
+            {
+                VsBall.DeathDrop();
+            }
             ChangeWeapon(null);
             visualModel.SetActive(false);
             SetNoClip(true);

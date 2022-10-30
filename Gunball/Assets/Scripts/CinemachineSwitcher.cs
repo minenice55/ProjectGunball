@@ -5,7 +5,7 @@ using Cinemachine;
 
 public static class CinemachineSwitcher
 {
-    public static void SwitchTo(CinemachineVirtualCamera cam)
+    public static void SwitchTo(CinemachineVirtualCameraBase cam)
     {
         var brain = CinemachineCore.Instance.FindPotentialTargetBrain(cam);
         if (brain != null)
