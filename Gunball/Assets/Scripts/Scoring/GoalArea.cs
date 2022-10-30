@@ -17,14 +17,17 @@ namespace Gunball.MapObject
             LayerMask ballLayer = LayerMask.GetMask("Ball");
             if (other.CompareTag("VsBall") && !goal)
             {
+                GunBall ball = other.GetComponent<GunBall>();
+                if (ball.Owner != null) return;
+                ball.DoDeath();
                 goal = true;
                 FindObjectOfType<ScoringSystem>().SetScore(1, ThisSide);
-                Invoke(nameof(resetGoal), 1);
+                Invoke(nameof(ResetGoal), 1);
                 Spinner.SetTrigger("spin");
             }
         }
 
-        void resetGoal()
+        void ResetGoal()
         {
             goal = false;
         }

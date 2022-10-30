@@ -3,7 +3,6 @@ using System.Collections;
 using UnityEngine;
 using Cinemachine;
 using Gunball.MapObject;
-using Gunball.Interface;
 using Gunball.WeaponSystem;
 
 namespace Gunball.MapObject
@@ -16,6 +15,15 @@ namespace Gunball.MapObject
             Primary = 1 << 0,
             Secondary = 1 << 1,
             Super = 1 << 2
+        }
+
+        public enum PlayerState
+        {
+            Active,
+            Dead,
+            Respawn,
+            GameIntro,
+            GameResult
         }
 
         #region Serialized Components
@@ -32,15 +40,19 @@ namespace Gunball.MapObject
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
         [SerializeField] GameObject[] WeaponPrefabs;
+        [SerializeField] RespawnRammer respawnRammer;
         #endregion
 
         #region Public Variables
         [NonSerialized] public WeaponBulletMgr Weapon;
-        public bool IsOnGround;
-        public bool IsJumping;
+        [NonSerialized] public PlayerState State;
+        [NonSerialized] public bool IsOnGround;
+        [NonSerialized] public bool IsJumping;
 
-        public IEnumerator FireCoroutine;
-        public bool InFireCoroutine = false;
+        [NonSerialized] public IEnumerator FireCoroutine;
+        [NonSerialized] public bool InFireCoroutine = false;
+
+        [NonSerialized] public GunBall VsBall;
         #endregion
 
         #region Private Variables
@@ -49,18 +61,24 @@ namespace Gunball.MapObject
         float _dt;
         float _firingTime;
         float _fireRelaxTime = Single.MaxValue;
-        float coyoteTimer, requestMoveTimer;
+        float requestMoveTimer;
         Rigidbody _playController;
         Vector3 _input;
         Vector3 _gndNormal;
         RaycastHit _gndHit;
         Quaternion _onJmpRotation;
         FiringType _fireKeys;
+
+        float respawnRamTime = 0f;
+        Vector3 respawnStart, respawnEnd;
         #endregion
 
         #region Public Properties
+        public Vector3 CameraDirection { get { return playerCamera.transform.forward; } }
+        public CinemachineVirtualCamera CineCamera { get { return playerCineCamera.VirtualCameraGameObject.GetComponent<CinemachineVirtualCamera>(); } }
         public Vector3 Velocity { get { return _playController.velocity; } }
-        public float Health { get { return _hp; } set { _hp = value; } }
+        public float MaxHealth { get { return playPrm.Max_Health; } }
+        public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
         public bool IsDead { get { return _hp <= 0; } }
         public Transform Transform { get { return transform; } }
         public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
@@ -74,11 +92,18 @@ namespace Gunball.MapObject
         #region Built-Ins
         void Start()
         {
+            _hp = 0;
             _playController = GetComponent<Rigidbody>();
 
-            ChangeWeapon(WeaponPrefabs[0]);
             guideMgr.SetCamera(playerCamera);
             Cursor.lockState = CursorLockMode.Locked;
+
+            // ChangeWeapon(WeaponPrefabs[0]);  // uncomment this and comment the stuff below it to start on the field
+            ChangeWeapon(null);
+            visualModel.SetActive(false);
+            SetNoClip(true);
+            _playController.velocity = Vector3.zero;
+            StartRespawnSequence();
         }
 
         void Update()
@@ -87,34 +112,21 @@ namespace Gunball.MapObject
             if (Input.GetKey(KeyCode.Escape))
                 Cursor.lockState = CursorLockMode.None;
 
-            _fireKeys = 0;
+            //TODO: only runs if this is the local player//
             PollInput();
             TickTimers();
-            DoPlayerMovement();
-
-            // from camera orientation set weapon orientation
-            //set vertical aim to the aim offset
-            playerCameraTarget.rotation = playerCamera.transform.rotation;
-            Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
-
-            guideMgr.UpdateGuide();
-
-            if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
+            if ((!IsDead) && respawnRamTime <= 0f)
             {
-                _fireRelaxTime = 0f;
-                Weapon.StartFireSequence(this);
+                DoPlayerMovement();
+                DoWeaponLogic();
             }
-            else if (_firingTime > 0)
-            {
-                _fireRelaxTime += _dt;
-            }
+            //////////////////////////
         }
 
         public void ChangeWeapon(GameObject weaponPrefab)
         {
             if (Input.GetButton("Attack"))
             {
-                Cursor.lockState = CursorLockMode.Locked;
                 _onWpSwitchBlock = true;
             }
             if (InFireCoroutine)
@@ -123,6 +135,15 @@ namespace Gunball.MapObject
                 FireCoroutine = null;
                 InFireCoroutine = false;
             }
+            if (weaponPrefab == null)
+            {
+                if (Weapon != null && Weapon.gameObject != null) Destroy(Weapon.gameObject);
+                Weapon = null;
+                guideMgr.SetWeapon(Weapon);
+                guideMgr.UpdateGuide();
+                return;
+            }
+
             GameObject WpGO = GameObject.Instantiate(weaponPrefab);
             WeaponBulletMgr newWeapon = WpGO.GetComponent<WeaponBulletMgr>();
             if (newWeapon == null)
@@ -138,6 +159,7 @@ namespace Gunball.MapObject
             }
             Weapon = newWeapon;
             guideMgr.SetWeapon(Weapon);
+            guideMgr.UpdateGuide();
 
             // _firingTime = 0f;
         }
@@ -190,11 +212,26 @@ namespace Gunball.MapObject
         void TickTimers()
         {
             _dt = Time.deltaTime;
-            if (coyoteTimer > 0)
-                coyoteTimer = Mathf.Max(coyoteTimer - _dt, 0);
+
+            if (respawnRamTime > 0f)
+            {
+                Health = playPrm.Max_Health;
+                respawnRamTime -= _dt;
+                transform.position = Vector3.Lerp(respawnStart, respawnEnd, 1f - Mathf.Clamp01(respawnRamTime));
+                if (respawnRamTime <= 0f)
+                {
+                    FinishRespawnRam();
+                    respawnRamTime = 0f;
+                    Vector3 xzDir = respawnEnd - respawnStart;
+                    xzDir.y = 0f;
+                    _playController.velocity = xzDir.normalized * 10f + Vector3.up * 2f;
+                }
+            }
 
             if (Input.GetButton("Attack"))
             {
+                //TEMPORARY
+                Cursor.lockState = CursorLockMode.Locked;
                 if (!_onWpSwitchBlock)
                 {
                     _fireKeys |= FiringType.Primary;
@@ -221,6 +258,7 @@ namespace Gunball.MapObject
 
         void PollInput()
         {
+            _fireKeys = 0;
             _input = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
         }
 
@@ -248,7 +286,7 @@ namespace Gunball.MapObject
                 _onJmpRotation = Quaternion.Euler(0, visualModel.transform.rotation.eulerAngles.y, 0);
             }
 
-            if (Input.GetButtonDown("Jump") && !IsJumping && (IsOnGround || coyoteTimer > 0))
+            if (Input.GetButtonDown("Jump") && !IsJumping && IsOnGround)
             {
                 DoJump();
             }
@@ -257,7 +295,8 @@ namespace Gunball.MapObject
                 DoJumpShortening();
             }
 
-            bool attacking = Weapon.GetPlayerInAction();
+
+            bool attacking = (Weapon != null) ? Weapon.GetPlayerInAction() : Input.GetButton("Attack");
             if (_input.magnitude > 0f)
             {
                 if (!attacking)
@@ -281,6 +320,26 @@ namespace Gunball.MapObject
             {
                 if (Velocity.y < -playPrm.Move_TerminalGravity)
                     _playController.velocity = new Vector3(Velocity.x, -playPrm.Move_TerminalGravity, Velocity.z);
+            }
+        }
+
+        void DoWeaponLogic()
+        {
+            // from camera orientation set weapon orientation
+            //set vertical aim to the aim offset
+            playerCameraTarget.rotation = playerCamera.transform.rotation;
+            Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
+
+            guideMgr.UpdateGuide();
+
+            if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
+            {
+                _fireRelaxTime = 0f;
+                Weapon.StartFireSequence(this);
+            }
+            else if (_firingTime > 0)
+            {
+                _fireRelaxTime += _dt;
             }
         }
 
@@ -388,7 +447,6 @@ namespace Gunball.MapObject
         void DoJump()
         {
             IsJumping = true;
-            coyoteTimer = 0f;
             _playController.velocity = new Vector3(Velocity.x, 0, Velocity.z);
             _playController.AddForce(_gndNormal * playPrm.Jump_Velocity, ForceMode.Impulse);
             IsOnGround = false;
@@ -399,8 +457,46 @@ namespace Gunball.MapObject
         void DoJumpShortening()
         {
             IsJumping = false;
-            coyoteTimer = 0f;
             _playController.velocity = new Vector3(Velocity.x, playPrm.Jump_Shortening, Velocity.z);
+        }
+
+        void SetNoClip(bool noClip = false)
+        {
+            _playController.detectCollisions = !noClip;
+            _playController.useGravity = !noClip;
+            _playController.isKinematic = noClip;
+
+            _playCollider.enabled = !noClip;
+            //disable colliders
+            foreach (Collider c in visualModel.GetComponentsInChildren<Collider>())
+            {
+                c.enabled = !noClip;
+            }
+        }
+
+        void StartRespawnSequence()
+        {
+            respawnRammer.StartRespawnSequence();
+        }
+
+        public void FinishRespawnSequence(Vector3 startPos, Vector3 targetPos, float xAxis)
+        {
+            Health = playPrm.Max_Health;
+            visualModel.SetActive(true);
+            transform.position = startPos;
+            visualModel.transform.LookAt(targetPos);
+            playerCineCamera.m_XAxis.Value = xAxis;
+            respawnRamTime = 0.66f;
+            respawnStart = startPos;
+            respawnEnd = targetPos + Vector3.up * 1f;
+            CinemachineSwitcher.SwitchTo(playerCineCamera);
+        }
+
+        void FinishRespawnRam()
+        {
+            Health = playPrm.Max_Health;
+            SetNoClip(false);
+            ResetWeapon();
         }
         #endregion
 
@@ -417,20 +513,49 @@ namespace Gunball.MapObject
         #region Inherited Methods
         public void Knockback(Vector3 force, Vector3 pos)
         {
+            if (IsDead) return;
             IsJumping = false;
             _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
         }
 
         public void DoDamage(float damage, Player source = null)
         {
+            if (IsDead) return;
+            if (respawnRamTime > 0f) return;
             // log damage
-            Debug.Log("Took " + damage + " damage");
+            Debug.Log("Took " + damage + " damage. Health remaining: " + (Health - damage));
+            Health -= damage;
+            if (IsDead)
+            {
+                // log death
+                Debug.Log("Player died");
+                // respawn
+                DoDeath(source);
+            }
         }
 
         public void RecoverDamage(float healing, Player source = null)
         {
+            if (IsDead) return;
+            if (respawnRamTime > 0f) return;
             // log recovery
             Debug.Log("Recovered " + healing + " damage");
+            Health += healing;
+        }
+
+        public void DoDeath(Player cause = null)
+        {
+            Health = 0;
+            if (VsBall != null)
+            {
+                VsBall.DeathDrop();
+            }
+            ChangeWeapon(null);
+            visualModel.SetActive(false);
+            SetNoClip(true);
+            _playController.velocity = Vector3.zero;
+            Invoke("StartRespawnSequence", 1f);
+            return;
         }
         #endregion
 
@@ -438,6 +563,8 @@ namespace Gunball.MapObject
         [Serializable]
         public class PlayerParameters
         {
+            [Header("Health")]
+            public float Max_Health = 100f;
             [Header("Movement")]
             public float Move_RunSpeed = 5.0f;
             public float Move_RunAccel = 100.0f;

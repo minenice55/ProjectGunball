@@ -18,7 +18,6 @@ namespace Gunball.WeaponSystem
         protected WeaponBulletMgr.CollisionParam ColPrm;
         protected WeaponBulletMgr.MoveSimpleParam MovePrm;
         protected WeaponBulletMgr.DamageParam DmgPrm;
-        Vector3 gravityStateSpeed;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
         LayerMask TerrainMask;
@@ -38,8 +37,6 @@ namespace Gunball.WeaponSystem
             facingDirection = facing;
             this.ignoreColliders = ignoreColliders;
             this.owner = owner;
-
-            gravityStateSpeed = MovePrm.GravitySpeed * facing;
             TerrainMask = LayerMask.GetMask("Ground", "Wall", "MapObjectSolid");
         }
 

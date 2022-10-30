@@ -73,7 +73,7 @@ namespace Gunball.WeaponSystem
             player.InFireCoroutine = true;
             yield return new WaitForSeconds(WpPrm.PreDelayTime);
             CreateWeaponBullet(player);
-
+            player.VsBall = null;
             ball.ResetOwner();
             player.ResetWeapon();
             player.InFireCoroutine = false;
