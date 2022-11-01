@@ -69,6 +69,7 @@ namespace Gunball.MapObject
         Quaternion _onJmpRotation;
         FiringType _fireKeys;
 
+        Vector3 _startPos;
         float respawnRamTime = 0f;
         Vector3 respawnStart, respawnEnd;
         #endregion
@@ -92,13 +93,13 @@ namespace Gunball.MapObject
         #region Built-Ins
         void Start()
         {
-            _hp = 0;
+            _startPos = transform.position - Vector3.up * 1.5f;
             _playController = GetComponent<Rigidbody>();
 
             guideMgr.SetCamera(playerCamera);
             Cursor.lockState = CursorLockMode.Locked;
 
-            // ChangeWeapon(WeaponPrefabs[0]);  // uncomment this and comment the stuff below it to start on the field
+            _hp = 0;
             ChangeWeapon(null);
             visualModel.SetActive(false);
             SetNoClip(true);
@@ -476,7 +477,21 @@ namespace Gunball.MapObject
 
         void StartRespawnSequence()
         {
-            respawnRammer.StartRespawnSequence();
+            if (respawnRammer == null)
+            {
+                Health = playPrm.Max_Health;
+                visualModel.SetActive(true);
+                transform.position = _startPos;
+                visualModel.transform.LookAt(_startPos + Vector3.up);
+                respawnRamTime = 0.66f;
+                respawnStart = _startPos;
+                respawnEnd = _startPos + Vector3.up;
+                CinemachineSwitcher.SwitchTo(playerCineCamera);
+            }
+            else
+            {
+                respawnRammer.StartRespawnSequence();
+            }
         }
 
         public void FinishRespawnSequence(Vector3 startPos, Vector3 targetPos, float xAxis)
