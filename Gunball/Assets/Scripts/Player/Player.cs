@@ -48,6 +48,7 @@ namespace Gunball.MapObject
         [NonSerialized] public PlayerState State;
         [NonSerialized] public bool IsOnGround;
         [NonSerialized] public bool IsJumping;
+        [NonSerialized] public bool IsPlayer = true;
 
         [NonSerialized] public IEnumerator FireCoroutine;
         [NonSerialized] public bool InFireCoroutine = false;
@@ -109,19 +110,22 @@ namespace Gunball.MapObject
 
         void Update()
         {
-            //TEMPORARY
-            if (Input.GetKey(KeyCode.Escape))
-                Cursor.lockState = CursorLockMode.None;
+            if (IsPlayer)
+            { 
+                //TEMPORARY
+                if (Input.GetKey(KeyCode.Escape))
+                    Cursor.lockState = CursorLockMode.None;
 
-            //TODO: only runs if this is the local player//
-            PollInput();
-            TickTimers();
-            if ((!IsDead) && respawnRamTime <= 0f)
-            {
-                DoPlayerMovement();
-                DoWeaponLogic();
+                //TODO: only runs if this is the local player//
+                PollInput();
+                TickTimers();
+                if ((!IsDead) && respawnRamTime <= 0f)
+                {
+                    DoPlayerMovement();
+                    DoWeaponLogic();
+                }
+                //////////////////////////
             }
-            //////////////////////////
         }
 
         public void ChangeWeapon(GameObject weaponPrefab)
