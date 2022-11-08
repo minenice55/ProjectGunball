@@ -10,6 +10,8 @@ namespace Gunball
 {
     public class NetworkedPlayer : NetworkBehaviour
     {
+        [SerializeField] GameObject playerCamera;
+        [SerializeField] GameObject playerGuide;
         // Start is called before the first frame update
         void Start()
         {
@@ -26,11 +28,8 @@ namespace Gunball
         {
             if (!IsOwner)
             {
-                Destroy(GetComponentInChildren<Camera>().gameObject);
-                Destroy(GetComponentInChildren<AudioListener>().gameObject);
-                Destroy(GetComponentInChildren<CinemachineVirtualCameraBase>().gameObject);
-                Destroy(GetComponentInChildren<CinemachineBrain>().gameObject);
-                Destroy(GetComponentInChildren<GuideManager>().gameObject);
+                Destroy(playerCamera);
+                Destroy(playerGuide);
                 GetComponent<Player>().IsPlayer = false;
             }
         }

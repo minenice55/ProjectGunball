@@ -171,7 +171,14 @@ namespace Gunball.MapObject
 
         public void ResetWeapon()
         {
-            ChangeWeapon(WeaponPrefabs[0]);
+            if (WeaponPrefabs.Length > 0)
+            {
+                ChangeWeapon(WeaponPrefabs[0]);
+            }
+            else
+            {
+                ChangeWeapon(null);
+            }
         }
         #endregion
 
@@ -333,10 +340,12 @@ namespace Gunball.MapObject
             // from camera orientation set weapon orientation
             //set vertical aim to the aim offset
             playerCameraTarget.rotation = playerCamera.transform.rotation;
-            Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
+            if (Weapon != null) 
+                Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
 
             guideMgr.UpdateGuide();
 
+            if (Weapon != null) return;
             if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
             {
                 _fireRelaxTime = 0f;
@@ -369,6 +378,7 @@ namespace Gunball.MapObject
 
         void DoPlayerModelRotation(float speed, bool faceCam = false)
         {
+            if (Weapon == null) faceCam = false;
             if (faceCam)
             {
                 Quaternion targetRot = Quaternion.Euler(0, playerCamera.transform.rotation.eulerAngles.y, 0);
