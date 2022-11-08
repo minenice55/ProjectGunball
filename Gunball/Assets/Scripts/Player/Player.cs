@@ -94,6 +94,9 @@ namespace Gunball.MapObject
         #region Built-Ins
         void Start()
         {
+            var netPlayer = GetComponent<NetworkedPlayer>();
+            if (netPlayer != null && !netPlayer.IsOwner) return;
+            
             _startPos = transform.position - Vector3.up * 1.5f;
             _playController = GetComponent<Rigidbody>();
 
