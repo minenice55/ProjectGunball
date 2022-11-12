@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
-using Gunball.MapObject;
 using Gunball.WeaponSystem;
 
 namespace Gunball.MapObject
@@ -39,12 +39,12 @@ namespace Gunball.MapObject
         [SerializeField] GuideManager guideMgr;
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
-        [SerializeField] GameObject[] WeaponPrefabs;
+        [SerializeField] string[] WeaponNames;
         [SerializeField] RespawnRammer respawnRammer;
         #endregion
 
         #region Public Variables
-        [NonSerialized] public WeaponBulletMgr Weapon;
+        [NonSerialized] public WeaponBase Weapon;
         [NonSerialized] public PlayerState State;
         [NonSerialized] public bool IsOnGround;
         [NonSerialized] public bool IsJumping;
@@ -63,8 +63,10 @@ namespace Gunball.MapObject
         float _firingTime;
         float _fireRelaxTime = Single.MaxValue;
         float requestMoveTimer;
+        float ignoreMoveTimer;
         Rigidbody _playController;
         Vector3 _input;
+        Vector3 _aimingInput;
         Vector3 _gndNormal;
         RaycastHit _gndHit;
         Quaternion _onJmpRotation;
@@ -73,6 +75,8 @@ namespace Gunball.MapObject
         Vector3 _startPos;
         float respawnRamTime = 0f;
         Vector3 respawnStart, respawnEnd;
+
+        Dictionary<string, GameObject> kitWeapons;
 
         NetworkedPlayer _netPlayer;
         #endregion
@@ -91,7 +95,7 @@ namespace Gunball.MapObject
         public FiringType CurrentFireKeys { get => _fireKeys; }
         public bool InAction { get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0; }
         public GameObject VisualModel { get => visualModel; }
-        public Vector3 AimingAngle { get => new Vector3(playerCamera.transform.rotation.eulerAngles.x, playerCamera.transform.rotation.eulerAngles.y, 0); }
+        public Vector3 AimingAngle { get => new Vector3(playerCamera.transform.rotation.eulerAngles.x, playerCamera.transform.rotation.eulerAngles.y, 0); set => _aimingInput = value; }
         public float SpeedStat { get => IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed; }
         public float AccelStat { get => IsOnGround ? playPrm.Move_RunAccel : playPrm.Move_AirAccel; }
         #endregion
@@ -102,6 +106,7 @@ namespace Gunball.MapObject
         {
             _playController = GetComponent<Rigidbody>();
             _netPlayer = GetComponent<NetworkedPlayer>();
+            CreateKitWeapons();
             if (_netPlayer != null && !_netPlayer.IsOwner) return;
             
             _startPos = transform.position - Vector3.up * 1.5f;
@@ -140,7 +145,17 @@ namespace Gunball.MapObject
             }
         }
 
-        public void ChangeWeapon(GameObject weaponPrefab)
+        public void CreateKitWeapons()
+        {
+            kitWeapons = new Dictionary<string, GameObject>();
+            for (int i = 0; i < WeaponNames.Length; i++)
+            {
+                GameObject WpGO = GameCoordinator.instance.CreatePlayerWeapon(WeaponNames[i]);
+                kitWeapons.Add(WeaponNames[i], Instantiate(WpGO, transform));
+            }
+        }
+
+        public void ChangeWeapon(string weaponName)
         {
             if (Input.GetButton("Attack"))
             {
@@ -152,40 +167,51 @@ namespace Gunball.MapObject
                 FireCoroutine = null;
                 InFireCoroutine = false;
             }
-            if (weaponPrefab == null)
+            if (weaponName == null)
             {
-                if (Weapon != null && Weapon.gameObject != null) Destroy(Weapon.gameObject);
                 Weapon = null;
                 guideMgr.SetWeapon(Weapon);
                 guideMgr.UpdateGuide();
                 return;
             }
 
-            GameObject WpGO = GameObject.Instantiate(weaponPrefab);
-            WeaponBulletMgr newWeapon = WpGO.GetComponent<WeaponBulletMgr>();
+            GameObject WpGO;
+            if (kitWeapons.ContainsKey(weaponName))
+            {
+                //check our kit weapons
+                WpGO = kitWeapons[weaponName];
+            }
+            else
+            {
+                //use global weapon pool
+                WpGO = GameCoordinator.instance.CreateGlobalWeapon(weaponName);
+            }
+            if (WpGO == null)
+            {
+                Weapon = null;
+                guideMgr.SetWeapon(Weapon);
+                guideMgr.UpdateGuide();
+                throw new Exception("ChangeWeapon: coordinator couldn't get weapon " + weaponName);
+            }
+            WeaponBase newWeapon = WpGO.GetComponent<WeaponBase>();
             if (newWeapon == null)
             {
                 Weapon = null;
                 guideMgr.SetWeapon(Weapon);
-                throw new Exception("ChangeWeapon: prefab is not a weapon bullet manager!");
+                guideMgr.UpdateGuide();
+                throw new Exception("ChangeWeapon: prefab is not a weapon base!");
             }
             newWeapon.SetOwner(gameObject, weaponPos);
-            if (Weapon != null)
-            {
-                Destroy(Weapon.gameObject);
-            }
             Weapon = newWeapon;
             guideMgr.SetWeapon(Weapon);
             guideMgr.UpdateGuide();
-
-            // _firingTime = 0f;
         }
 
         public void ResetWeapon()
         {
-            if (WeaponPrefabs.Length > 0)
+            if (WeaponNames.Length > 0)
             {
-                ChangeWeapon(WeaponPrefabs[0]);
+                ChangeWeapon(WeaponNames[0]);
             }
             else
             {
@@ -278,6 +304,9 @@ namespace Gunball.MapObject
                 requestMoveTimer += _dt;
             else
                 requestMoveTimer = 0f;
+            
+            ignoreMoveTimer -= _dt;
+            if (ignoreMoveTimer < 0f) ignoreMoveTimer = 0f;
         }
 
         void PollInput()
@@ -389,7 +418,7 @@ namespace Gunball.MapObject
             if (Weapon == null) faceCam = false;
             if (faceCam)
             {
-                Quaternion targetRot = Quaternion.Euler(0, playerCamera.transform.rotation.eulerAngles.y, 0);
+                Quaternion targetRot = Quaternion.Euler(0, AimingAngle.y, 0);
                 if (IsOnGround)
                 {
                     visualModel.transform.rotation = Quaternion.Slerp(visualModel.transform.rotation, targetRot, 90f * _dt);
@@ -448,7 +477,7 @@ namespace Gunball.MapObject
                 _playController.AddForce(moveDir.normalized * 0, ForceMode.Force);
             }
 
-            if (IsOnGround)
+            if (IsOnGround && ignoreMoveTimer <= 0)
                 DoSpeedCap(speed);
         }
 
@@ -555,6 +584,11 @@ namespace Gunball.MapObject
             if (IsDead) return;
             IsJumping = false;
             _playController.AddForceAtPosition(force, pos, ForceMode.Impulse);
+        }
+
+        public void SetKnockbackTimer(float time)
+        {
+            ignoreMoveTimer = time;
         }
 
         public void DoDamage(float damage, Player source = null)

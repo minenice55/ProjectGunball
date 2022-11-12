@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Gunball.WeaponSystem;
+using Gunball.MapObject;
 
 namespace Gunball
 {
@@ -11,8 +12,8 @@ namespace Gunball
     {
         public static GameCoordinator instance;
         public List<WeaponEntry> weapons;
-        // Start is called before the first frame update
-        void Start()
+        public Dictionary<string, GameObject> weaponObjects;
+        void Awake()
         {
             instance = this;
         }
@@ -34,6 +35,38 @@ namespace Gunball
                 }
             }
             GUILayout.EndArea();
+        }
+
+        public GameObject CreateGlobalWeapon(string name)
+        {
+            if (weaponObjects == null)
+            {
+                weaponObjects = new Dictionary<string, GameObject>();
+            }
+            if (!weaponObjects.ContainsKey(name))
+            {
+                GameObject weapon = GameObject.Instantiate(GetWeaponFromName(name));
+                weaponObjects.Add(name, weapon);
+            }
+            return weaponObjects[name];
+        }
+
+        public GameObject CreatePlayerWeapon(string name)
+        {
+            GameObject weapon = GameObject.Instantiate(GetWeaponFromName(name), transform);
+            return weapon;
+        }
+
+        public GameObject GetWeaponFromName(string name)
+        {
+            foreach (WeaponEntry entry in weapons)
+            {
+                if (entry.name == name)
+                {
+                    return entry.weaponManager;
+                }
+            }
+            throw new System.Exception("Weapon " + name + " not found");
         }
     }
 }

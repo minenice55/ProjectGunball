@@ -90,7 +90,7 @@ MonoBehaviour:
         Knockback:
           Force: 15
           Radius: 2
-          DistanceBias: 1
+          TimeBias: 0.25
           PlayerBias: 1
           VsBallBias: 0.75
           MapObjectBias: 0.25
@@ -99,7 +99,7 @@ MonoBehaviour:
         Knockback:
           Force: 10
           Radius: 5
-          DistanceBias: 1
+          TimeBias: 0.1
           PlayerBias: 1
           VsBallBias: 0.8
           MapObjectBias: 0.25
@@ -111,7 +111,7 @@ MonoBehaviour:
     Knockback:
       Force: 20
       Radius: 0
-      DistanceBias: 0
+      TimeBias: 0
       PlayerBias: 0
       VsBallBias: 1
       MapObjectBias: 0

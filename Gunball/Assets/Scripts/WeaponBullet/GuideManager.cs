@@ -15,14 +15,14 @@ namespace Gunball.WeaponSystem
         [SerializeField] LineRenderer trajectoryRenderer;
 
         Camera mainCam;
-        WeaponBulletMgr Wpn;
+        WeaponBase Wpn;
         Vector3 PredictionPos;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
         public void UpdateGuide()
         {
             trajectoryRenderer.positionCount = 0;
-            if (Wpn == null || Wpn.GetGuideType() == WeaponBulletMgr.GuideType.None)
+            if (Wpn == null || Wpn.GetGuideType() == WeaponBase.GuideType.None)
             {
                 CollidingGuideRect.gameObject.SetActive(false);
                 PredictingGuideRect.gameObject.SetActive(false);
@@ -38,12 +38,12 @@ namespace Gunball.WeaponSystem
             Vector3[] points = Wpn.GetGuideCastPoints();
             switch (Wpn.GetGuideType())
             {
-                case WeaponBulletMgr.GuideType.Shot:
+                case WeaponBase.GuideType.Shot:
                     PredictingGuideRect.gameObject.SetActive(true);
                     CollidingGuideRect.gameObject.SetActive(true);
                     DrawShotGuide(points);
                     break;
-                case WeaponBulletMgr.GuideType.Trajectory:
+                case WeaponBase.GuideType.Trajectory:
                     CollidingGuideRect.gameObject.SetActive(false);
                     PredictingGuideRect.gameObject.SetActive(false);
                     DrawTrajectoryGuide(points);
@@ -58,7 +58,7 @@ namespace Gunball.WeaponSystem
             mainCam = cam;
         }
 
-        public void SetWeapon(WeaponBulletMgr wpn)
+        public void SetWeapon(WeaponBase wpn)
         {
             Wpn = wpn;
         }

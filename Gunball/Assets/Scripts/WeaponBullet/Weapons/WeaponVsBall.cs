@@ -5,7 +5,7 @@ using Gunball.WeaponSystem;
 using Gunball.MapObject;
 namespace Gunball.WeaponSystem
 {
-    public class WeaponVsBall : WeaponBulletMgr
+    public class WeaponVsBall : WeaponBase
     {
         [SerializeField] GuideParam GuidePrm;
         [SerializeField] CollisionParam ColPrm;

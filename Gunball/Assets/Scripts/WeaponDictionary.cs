@@ -29,8 +29,7 @@ namespace Gunball.WeaponSystem
         {
             public string name;
             public WeaponClass weaponClass;
-            public WeaponBulletMgr weaponManager;
+            public GameObject weaponManager;
         }
     }
-
 }

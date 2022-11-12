@@ -15,17 +15,17 @@ namespace Gunball.WeaponSystem
         protected Collider[] ignoreColliders;
         protected Vector3 facingDirection;
         protected Vector3[] castPoints;
-        protected WeaponBulletMgr.CollisionParam ColPrm;
-        protected WeaponBulletMgr.MoveSimpleParam MovePrm;
-        protected WeaponBulletMgr.DamageParam DmgPrm;
+        protected WeaponBase.CollisionParam ColPrm;
+        protected WeaponBase.MoveSimpleParam MovePrm;
+        protected WeaponBase.DamageParam DmgPrm;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
         LayerMask TerrainMask;
 
         public virtual void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
-            WeaponBulletMgr.CollisionParam colPrm,
-            WeaponBulletMgr.MoveSimpleParam movePrm,
-            WeaponBulletMgr.DamageParam dmgPrm)
+            WeaponBase.CollisionParam colPrm,
+            WeaponBase.MoveSimpleParam movePrm,
+            WeaponBase.DamageParam dmgPrm)
         {
             ColPrm = colPrm;
             MovePrm = movePrm;
@@ -91,6 +91,7 @@ namespace Gunball.WeaponSystem
                         return;
                 }
                 hitObj.Knockback(facingDirection * DmgPrm.Knockback.Force * bias, pos);
+                hitObj.SetKnockbackTimer(DmgPrm.Knockback.TimeBias);
             }
         }
 
@@ -178,7 +179,7 @@ namespace Gunball.WeaponSystem
             hit = new RaycastHit();
             return false;
         }
-        public static Vector3 TryBulletMove(Vector3 startPos, Vector3 rootPos, Vector3 currPos, Vector3 facingDirection, float lifeTime, float _dt, WeaponBulletMgr.MoveSimpleParam movePrm, out Vector3[] castPos)
+        public static Vector3 TryBulletMove(Vector3 startPos, Vector3 rootPos, Vector3 currPos, Vector3 facingDirection, float lifeTime, float _dt, WeaponBase.MoveSimpleParam movePrm, out Vector3[] castPos)
         {
             List<Vector3> castPoints = new List<Vector3>();
             Vector3 pos = currPos;

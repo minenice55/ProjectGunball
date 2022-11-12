@@ -7,9 +7,9 @@ namespace Gunball.WeaponSystem
 {
     public class BulletBlast : MonoBehaviour
     {
-        WeaponBulletMgr.BlastSimpleParam BlastPrm;
+        WeaponBase.BlastSimpleParam BlastPrm;
 
-        public void DoBlast(WeaponBulletMgr.BlastSimpleParam blastPrm, Vector3 pos)
+        public void DoBlast(WeaponBase.BlastSimpleParam blastPrm, Vector3 pos)
         {
             LayerMask playerMask = LayerMask.GetMask("Player", "Ball");
             gameObject.SetActive(true);
@@ -35,7 +35,7 @@ namespace Gunball.WeaponSystem
                                 Vector3 direction = (cPoint - transform.position).normalized;
                                 target.DoDamage(blastPrm.DistanceDamage[i].BlastDamage);
                                 float bias = 1f;
-                                WeaponBulletMgr.KnockbackParam kbPrm = blastPrm.DistanceDamage[i].Knockback;
+                                WeaponBase.KnockbackParam kbPrm = blastPrm.DistanceDamage[i].Knockback;
                                 switch (target.Type)
                                 {
                                     case IShootableObject.ShootableType.Player:
@@ -51,6 +51,7 @@ namespace Gunball.WeaponSystem
                                         continue;
                                 }
                                 target.Knockback(direction * kbPrm.Force * bias, pos);
+                                target.SetKnockbackTimer(kbPrm.TimeBias);
                                 wasHit = true;
                                 break; 
                             }

@@ -9,11 +9,11 @@ namespace Gunball.WeaponSystem
     {
 
         [SerializeField] GameObject BlastPrefab;
-        WeaponBulletMgr.MoveBlastParam BlastParam;
+        WeaponBase.MoveBlastParam BlastParam;
         public void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
-            WeaponBulletMgr.CollisionParam colPrm,
-            WeaponBulletMgr.MoveBlastParam movePrm,
-            WeaponBulletMgr.DamageParam dmgPrm)
+            WeaponBase.CollisionParam colPrm,
+            WeaponBase.MoveBlastParam movePrm,
+            WeaponBase.DamageParam dmgPrm)
         {
             base.SetupBullet(weaponPos, playRootPos, facing, owner, ignoreColliders, colPrm, movePrm.MoveSimpleParam, dmgPrm);
             BlastParam = movePrm;
