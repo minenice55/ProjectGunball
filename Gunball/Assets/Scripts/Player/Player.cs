@@ -73,12 +73,14 @@ namespace Gunball.MapObject
         Vector3 _startPos;
         float respawnRamTime = 0f;
         Vector3 respawnStart, respawnEnd;
+
+        NetworkedPlayer _netPlayer;
         #endregion
 
         #region Public Properties
         public Vector3 CameraDirection { get { return playerCamera.transform.forward; } }
         public CinemachineVirtualCamera CineCamera { get { return playerCineCamera.VirtualCameraGameObject.GetComponent<CinemachineVirtualCamera>(); } }
-        public Vector3 Velocity { get { return _playController.velocity; } }
+        public Vector3 Velocity { get { return _playController.velocity; } set { _playController.velocity = value; } }
         public float MaxHealth { get { return playPrm.Max_Health; } }
         public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
         public bool IsDead { get { return _hp <= 0; } }
@@ -88,17 +90,21 @@ namespace Gunball.MapObject
         public Transform BallSpawnPos { get => vsWpnBallPos; }
         public FiringType CurrentFireKeys { get => _fireKeys; }
         public bool InAction { get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0; }
+        public GameObject VisualModel { get => visualModel; }
+        public Vector3 AimingAngle { get => new Vector3(playerCamera.transform.rotation.eulerAngles.x, playerCamera.transform.rotation.eulerAngles.y, 0); }
+        public float SpeedStat { get => IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed; }
+        public float AccelStat { get => IsOnGround ? playPrm.Move_RunAccel : playPrm.Move_AirAccel; }
         #endregion
 
 
         #region Built-Ins
         void Start()
         {
-            var netPlayer = GetComponent<NetworkedPlayer>();
-            if (netPlayer != null && !netPlayer.IsOwner) return;
+            _playController = GetComponent<Rigidbody>();
+            _netPlayer = GetComponent<NetworkedPlayer>();
+            if (_netPlayer != null && !_netPlayer.IsOwner) return;
             
             _startPos = transform.position - Vector3.up * 1.5f;
-            _playController = GetComponent<Rigidbody>();
 
             guideMgr.SetCamera(playerCamera);
             Cursor.lockState = CursorLockMode.Locked;
@@ -113,13 +119,17 @@ namespace Gunball.MapObject
 
         void Update()
         {
-            if (IsPlayer)
-            { 
+            if (_netPlayer != null && !_netPlayer.IsOwner)
+            {
+                GetGrounded();
+                GetSlopeNormal();
+            }
+            else
+            {
                 //TEMPORARY
                 if (Input.GetKey(KeyCode.Escape))
                     Cursor.lockState = CursorLockMode.None;
 
-                //TODO: only runs if this is the local player//
                 PollInput();
                 TickTimers();
                 if ((!IsDead) && respawnRamTime <= 0f)
@@ -127,7 +137,6 @@ namespace Gunball.MapObject
                     DoPlayerMovement();
                     DoWeaponLogic();
                 }
-                //////////////////////////
             }
         }
 
@@ -197,7 +206,7 @@ namespace Gunball.MapObject
             if (_isOnSlopeSteep)
                 direction = Vector3.zero;
             else
-                direction = (Vector3.Scale(playerCamera.transform.TransformDirection(_input), new Vector3(1, 0, 1)) * _dt * playPrm.Move_RunSpeed);
+                direction = (Vector3.Scale(Velocity, new Vector3(1, 0, 1)) * _dt);
             Vector3 p1 = transform.position + _playCollider.center + Vector3.down * (_playCollider.height * 0.5f - _playCollider.radius - 0.05f) + direction;
             Vector3 p2 = p1 + Vector3.up * (_playCollider.height - _playCollider.radius * 2f - 0.05f);
 
@@ -282,9 +291,6 @@ namespace Gunball.MapObject
             GetGrounded();
             GetSlopeNormal();
 
-            float speed = IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed;
-            float accel = IsOnGround ? playPrm.Move_RunAccel : playPrm.Move_AirAccel;
-
             if (IsOnGround)
             {
                 if (_onJmpRotation != Quaternion.identity)
@@ -317,13 +323,13 @@ namespace Gunball.MapObject
                 if (!attacking)
                     DoCameraAutoTurn();
                 if (!_isOnSlopeSteep)
-                    DoMove(speed, accel);
+                    DoMove(SpeedStat, AccelStat);
             }
-            DoPlayerModelRotation(speed, attacking);
+            DoPlayerModelRotation(SpeedStat, attacking);
             if (_isOnSlopeSteep)
             {
                 //slide away from the slope
-                DoSlopeSliding(accel);
+                DoSlopeSliding(AccelStat);
             }
 
             if (Velocity.y < 0f)
@@ -348,8 +354,7 @@ namespace Gunball.MapObject
 
             guideMgr.UpdateGuide();
 
-            if (Weapon != null) return;
-            if (Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
+            if (Weapon != null && Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
             {
                 _fireRelaxTime = 0f;
                 Weapon.StartFireSequence(this);
@@ -392,7 +397,7 @@ namespace Gunball.MapObject
                 else
                 {
                     _onJmpRotation = targetRot;
-                    targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 10f);
+                    targetRot = TiltRotationTowardsVelocity(_onJmpRotation, Vector3.up, Velocity, speed * 32f);
                     visualModel.transform.rotation = Quaternion.Slerp(visualModel.transform.rotation, targetRot, 90f * _dt);
                 }
             }
@@ -415,6 +420,8 @@ namespace Gunball.MapObject
 
         void DoMove(float speed, float accel)
         {
+            // if (_netPlayer.IsOwner)
+            //     Debug.Log("DoMove: " + _input + " kine: " + _playController.isKinematic);
             Vector3 vel = new Vector3(Velocity.x, 0, Velocity.z);
             Vector3 moveDir = playerCamera.transform.TransformDirection(_input);
             moveDir.y = 0f;
