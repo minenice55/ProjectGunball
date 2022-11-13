@@ -16,11 +16,16 @@ namespace Gunball.WeaponSystem
         [SerializeField] protected GameObject BulletObject;
 
         public Vector3 FacingDirection { get { return facingDirection; } }
+        public Player Owner { get { return owner; } }
+
+        public bool IsGlobalWeapon = true;
 
         public Collider[] IgnoreColliders;
         protected Vector3 facingDirection;
         protected float nextFireTime = 0, lastActionTime = Single.MinValue;
         protected Player owner;
+
+        protected NetworkedWeapon _netWeapon;
 
         public enum GuideType
         {
@@ -31,6 +36,10 @@ namespace Gunball.WeaponSystem
         }
 
         #region Methods
+        void Start()
+        {
+            _netWeapon = GetComponent<NetworkedWeapon>();
+        }
         public void SetFacingDirection(Vector3 dir)
         {
             facingDirection = dir;
@@ -47,17 +56,26 @@ namespace Gunball.WeaponSystem
         #region Virtual Methods
         public virtual void StartFireSequence(Player player)
         {
-            owner.FireCoroutine = DoFireSequence(owner);
+            if (_netWeapon != null && !_netWeapon.IsOwner) return;
+            owner.FireCoroutine = DoFireSequence(WpPrm.PreDelayTime, owner);
             owner.StartCoroutine(owner.FireCoroutine);
         }
-        public virtual IEnumerator DoFireSequence(Player player)
+        public virtual IEnumerator DoFireSequence(float delay, Player player)
         {
             player.InFireCoroutine = true;
-            yield return new WaitForSeconds(WpPrm.PreDelayTime);
-            CreateWeaponBullet(player);
+            if (delay > 0)
+                yield return new WaitForSeconds(delay);
+            
+            if (_netWeapon != null)
+            {
+                if (_netWeapon.IsOwner)
+                    _netWeapon.NetCreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection);
+            }
+            else
+                CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
             player.InFireCoroutine = false;
         }
-        public virtual void CreateWeaponBullet(Player player) { }
+        public virtual void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0) { }
         public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm)
         {
             if (heldDuration <= 0 && relaxDuration > 0)

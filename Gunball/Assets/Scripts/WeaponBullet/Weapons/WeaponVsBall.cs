@@ -63,16 +63,25 @@ namespace Gunball.WeaponSystem
 
         public override Vector3 OverrideSpawnPos() { return owner.BallSpawnPos.position; }
 
-        public override void CreateWeaponBullet(Player player)
+        public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0)
         {
+            //todo: make ball compensate for net delay?
             ball.EndEffect();
         }
 
-        public override IEnumerator DoFireSequence(Player player)
+        public override IEnumerator DoFireSequence(float delay, Player player)
         {
             player.InFireCoroutine = true;
-            yield return new WaitForSeconds(WpPrm.PreDelayTime);
-            CreateWeaponBullet(player);
+            if (delay > 0)
+                yield return new WaitForSeconds(delay);
+            
+            if (_netWeapon != null)
+            {
+                if (_netWeapon.IsOwner)
+                    _netWeapon.NetCreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection);
+            }
+            else
+                CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
             player.VsBall = null;
             ball.ResetOwner();
             player.ResetWeapon();

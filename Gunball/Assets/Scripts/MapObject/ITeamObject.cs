@@ -8,12 +8,10 @@ namespace Gunball.MapObject
         {
             Alpha,
             Bravo,
-            Charlie,
-            Delta,
-            Neutral
-
+            Neutral,
+            Other
         }
-
+        GameObject gameObject { get; }
         public Teams ObjectTeam { get; }
 
     }

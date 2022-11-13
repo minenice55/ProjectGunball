@@ -2,12 +2,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 using Cinemachine;
 using Gunball.WeaponSystem;
 
 namespace Gunball.MapObject
 {
-    public class Player : MonoBehaviour, IShootableObject
+    public class Player : MonoBehaviour, IShootableObject, IDamageSource
     {
         [System.Flags]
         public enum FiringType
@@ -39,11 +40,11 @@ namespace Gunball.MapObject
         [SerializeField] GuideManager guideMgr;
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
-        [SerializeField] string[] WeaponNames;
         [SerializeField] RespawnRammer respawnRammer;
         #endregion
 
         #region Public Variables
+        [SerializeField] public string[] WeaponNames;
         [NonSerialized] public WeaponBase Weapon;
         [NonSerialized] public PlayerState State;
         [NonSerialized] public bool IsOnGround;
@@ -100,7 +101,6 @@ namespace Gunball.MapObject
         public float AccelStat { get => IsOnGround ? playPrm.Move_RunAccel : playPrm.Move_AirAccel; }
         #endregion
 
-
         #region Built-Ins
         void Start()
         {
@@ -148,11 +148,24 @@ namespace Gunball.MapObject
         public void CreateKitWeapons()
         {
             kitWeapons = new Dictionary<string, GameObject>();
-            for (int i = 0; i < WeaponNames.Length; i++)
+            if (_netPlayer != null)
             {
-                GameObject WpGO = GameCoordinator.instance.CreatePlayerWeapon(WeaponNames[i]);
-                kitWeapons.Add(WeaponNames[i], Instantiate(WpGO, transform));
+                if (_netPlayer.IsOwner)
+                    _netPlayer.SetupKitWeaponsServerRpc();
             }
+            else
+            {
+                for (int i = 0; i < WeaponNames.Length; i++)
+                {
+                    GameObject WpGO = GameCoordinator.instance.CreatePlayerWeapon(WeaponNames[i]);
+                    RegisterKitWeapon(WeaponNames[i], WpGO);
+                }
+            }
+        }
+
+        public void RegisterKitWeapon(string name, GameObject wpn)
+        {
+            kitWeapons.Add(name, wpn);
         }
 
         public void ChangeWeapon(string weaponName)
@@ -169,9 +182,7 @@ namespace Gunball.MapObject
             }
             if (weaponName == null)
             {
-                Weapon = null;
-                guideMgr.SetWeapon(Weapon);
-                guideMgr.UpdateGuide();
+                SetNullWeapon();
                 return;
             }
 
@@ -188,21 +199,29 @@ namespace Gunball.MapObject
             }
             if (WpGO == null)
             {
-                Weapon = null;
-                guideMgr.SetWeapon(Weapon);
-                guideMgr.UpdateGuide();
+                SetNullWeapon();
                 throw new Exception("ChangeWeapon: coordinator couldn't get weapon " + weaponName);
             }
             WeaponBase newWeapon = WpGO.GetComponent<WeaponBase>();
             if (newWeapon == null)
             {
-                Weapon = null;
-                guideMgr.SetWeapon(Weapon);
-                guideMgr.UpdateGuide();
+                SetNullWeapon();
                 throw new Exception("ChangeWeapon: prefab is not a weapon base!");
             }
             newWeapon.SetOwner(gameObject, weaponPos);
             Weapon = newWeapon;
+            guideMgr.SetWeapon(Weapon);
+            guideMgr.UpdateGuide();
+            if (_netPlayer != null) WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
+        }
+
+        void SetNullWeapon()
+        {
+            if (Weapon != null && Weapon.gameObject != null && !Weapon.IsGlobalWeapon)
+            {
+                if (_netPlayer != null) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
+            }
+            Weapon = null;
             guideMgr.SetWeapon(Weapon);
             guideMgr.UpdateGuide();
         }
@@ -591,7 +610,7 @@ namespace Gunball.MapObject
             ignoreMoveTimer = time;
         }
 
-        public void DoDamage(float damage, Player source = null)
+        public void DoDamage(float damage, IDamageSource source = null)
         {
             if (IsDead) return;
             if (respawnRamTime > 0f) return;
@@ -607,7 +626,7 @@ namespace Gunball.MapObject
             }
         }
 
-        public void RecoverDamage(float healing, Player source = null)
+        public void RecoverDamage(float healing, IDamageSource source = null)
         {
             if (IsDead) return;
             if (respawnRamTime > 0f) return;
@@ -616,7 +635,7 @@ namespace Gunball.MapObject
             Health += healing;
         }
 
-        public void DoDeath(Player cause = null)
+        public void DoDeath(IDamageSource cause = null)
         {
             Health = 0;
             if (VsBall != null)
@@ -629,6 +648,37 @@ namespace Gunball.MapObject
             _playController.velocity = Vector3.zero;
             Invoke("StartRespawnSequence", 1f);
             return;
+        }
+
+        public void InflictKnockback(Vector3 force, Vector3 pos, float knockbackTimer, IShootableObject target)
+        {
+            if (_netPlayer != null)
+            {
+                if (_netPlayer.IsOwner)
+                    _netPlayer.NetInflictKnockback(force, pos, knockbackTimer, target);
+            }
+            target.Knockback(force, pos);
+            target.SetKnockbackTimer(knockbackTimer);
+        }
+
+        public void InflictDamage(float damage, IShootableObject target)
+        {
+            if (_netPlayer != null)
+            {
+                if (_netPlayer.IsOwner)
+                    _netPlayer.NetInflictDamage(damage, target);
+            }
+            target.DoDamage(damage, this);
+        }
+
+        public void InflictHealing(float healing, IShootableObject target)
+        {
+            if (_netPlayer != null)
+            {
+                if (_netPlayer.IsOwner)
+                    _netPlayer.NetInflictHealing(healing, target);
+            }
+            target.RecoverDamage(healing, this);
         }
         #endregion
 

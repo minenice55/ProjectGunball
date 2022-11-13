@@ -90,15 +90,89 @@ namespace Gunball
             transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
             lastGroundRotation = newState.LastGroundRotation;
             _player.Health = newState.Health;
-            if (_player.IsDead)
+        }
+
+#region Remote Procedure Calls
+        [ServerRpc]
+        public void SetupKitWeaponsServerRpc()
+        {
+            for (int i = 0; i < _player.WeaponNames.Length; i++)
             {
-                _player.VisualModel.SetActive(false);
-            }
-            else
-            {
-                _player.VisualModel.SetActive(true);
+                GameObject WpGO = GameCoordinator.instance.CreatePlayerWeapon(_player.WeaponNames[i]);
+                _player.RegisterKitWeapon(_player.WeaponNames[i], WpGO);
+                WpGO.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
             }
         }
+
+        public void NetInflictDamage(float damage, IShootableObject target)
+        {
+            InflictDamageServerRpc(damage, target.gameObject.GetComponent<NetworkObject>().NetworkObjectId, gameObject.GetComponent<NetworkObject>().NetworkObjectId);
+        }
+        [ServerRpc]
+        public void InflictDamageServerRpc(float damage, ulong targetNetId, ulong sourceNetId)
+        {
+            InflictDamageClientRpc(damage, targetNetId, sourceNetId);
+        }
+        [ClientRpc]
+        public void InflictDamageClientRpc(float damage, ulong targetNetId, ulong sourceNetId)
+        {
+            if (IsOwner) return;
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            IDamageSource source = NetworkManager.SpawnManager.SpawnedObjects[sourceNetId].GetComponent<IDamageSource>();
+            if (target == null || source == null)
+            {
+                Debug.LogError("Player NetInflictDamage Client RPC: Target or source is null!");
+                return;
+            }
+            target.DoDamage(damage, source);
+        }
+
+        public void NetInflictKnockback(Vector3 force, Vector3 pos, float knockbackTimer, IShootableObject target)
+        {
+            InflictKnockbackServerRpc(force, pos, knockbackTimer, target.gameObject.GetComponent<NetworkObject>().NetworkObjectId, gameObject.GetComponent<NetworkObject>().NetworkObjectId);
+        }
+        [ServerRpc]
+        public void InflictKnockbackServerRpc(Vector3 force, Vector3 pos, float knockbackTimer, ulong targetNetId, ulong sourceNetId)
+        {
+            InflictKnockbackClientRpc(force, pos, knockbackTimer, targetNetId, sourceNetId);
+        }
+        [ClientRpc]
+        public void InflictKnockbackClientRpc(Vector3 force, Vector3 pos, float knockbackTimer, ulong targetNetId, ulong sourceNetId)
+        {
+            if (IsOwner) return;
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target == null)
+            {
+                Debug.LogError("Player NetInflictKnockback Client RPC: Target or null!");
+                return;
+            }
+            target.SetKnockbackTimer(knockbackTimer);
+            target.Knockback(force, pos);
+        }
+
+        public void NetInflictHealing(float healing, IShootableObject target)
+        {
+            InflictHealingServerRpc(healing, target.gameObject.GetComponent<NetworkObject>().NetworkObjectId, gameObject.GetComponent<NetworkObject>().NetworkObjectId);
+        }
+        [ServerRpc]
+        public void InflictHealingServerRpc(float healing, ulong targetNetId, ulong sourceNetId)
+        {
+            InflictHealingClientRpc(healing, targetNetId, sourceNetId);
+        }
+        [ClientRpc]
+        public void InflictHealingClientRpc(float healing, ulong targetNetId, ulong sourceNetId)
+        {
+            if (IsOwner) return;
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            IDamageSource source = NetworkManager.SpawnManager.SpawnedObjects[sourceNetId].GetComponent<IDamageSource>();
+            if (target == null || source == null)
+            {
+                Debug.LogError("Player NetInflictHealing Client RPC: Target or source is null!");
+                return;
+            }
+            target.RecoverDamage(healing, source);
+        }
+#endregion
 
         public struct NetworkedPlayerState : INetworkSerializable
         {

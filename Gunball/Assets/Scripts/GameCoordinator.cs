@@ -45,7 +45,8 @@ namespace Gunball
             }
             if (!weaponObjects.ContainsKey(name))
             {
-                GameObject weapon = GameObject.Instantiate(GetWeaponFromName(name));
+                GameObject weapon = Instantiate(GetWeaponFromName(name));
+                weapon.GetComponent<WeaponBase>().IsGlobalWeapon = true;
                 weaponObjects.Add(name, weapon);
             }
             return weaponObjects[name];
@@ -53,7 +54,8 @@ namespace Gunball
 
         public GameObject CreatePlayerWeapon(string name)
         {
-            GameObject weapon = GameObject.Instantiate(GetWeaponFromName(name), transform);
+            GameObject weapon = GameObject.Instantiate(GetWeaponFromName(name));
+            weapon.GetComponent<WeaponBase>().IsGlobalWeapon = false;
             return weapon;
         }
 

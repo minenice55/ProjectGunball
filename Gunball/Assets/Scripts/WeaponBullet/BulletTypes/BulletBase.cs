@@ -22,22 +22,24 @@ namespace Gunball.WeaponSystem
 
         LayerMask TerrainMask;
 
-        public virtual void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
+        public virtual void SetupBullet(Vector3 weaponPos, Vector3 playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
             WeaponBase.CollisionParam colPrm,
             WeaponBase.MoveSimpleParam movePrm,
-            WeaponBase.DamageParam dmgPrm)
+            WeaponBase.DamageParam dmgPrm,
+            float postDelay = 0)
         {
             ColPrm = colPrm;
             MovePrm = movePrm;
             DmgPrm = dmgPrm;
 
-            startPos = weaponPos.position;
-            rootPos = playRootPos.position;
+            startPos = weaponPos;
+            rootPos = playRootPos;
             transform.position = startPos;
             facingDirection = facing;
             this.ignoreColliders = ignoreColliders;
             this.owner = owner;
             TerrainMask = LayerMask.GetMask("Ground", "Wall", "MapObjectSolid");
+            DoBulletMove(postDelay, out Vector3 pos);
         }
 
         public void Update()
@@ -74,7 +76,7 @@ namespace Gunball.WeaponSystem
                         Mathf.Lerp(DmgPrm.DamageMax, DmgPrm.DamageMin, (lifeTime - DmgPrm.ReduceStartTime) / (DmgPrm.ReduceEndTime - DmgPrm.ReduceStartTime))
                     );
                 }
-                hitObj.DoDamage(damage, owner);
+                owner.InflictDamage(damage, hitObj);
                 float bias = 1f;
                 switch (hitObj.Type)
                 {
@@ -90,8 +92,7 @@ namespace Gunball.WeaponSystem
                     case IShootableObject.ShootableType.None:
                         return;
                 }
-                hitObj.Knockback(facingDirection * DmgPrm.Knockback.Force * bias, pos);
-                hitObj.SetKnockbackTimer(DmgPrm.Knockback.TimeBias);
+                owner.InflictKnockback(facingDirection * DmgPrm.Knockback.Force * bias, pos, DmgPrm.Knockback.TimeBias, hitObj);
             }
         }
 

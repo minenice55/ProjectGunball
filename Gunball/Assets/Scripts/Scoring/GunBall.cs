@@ -72,10 +72,10 @@ namespace Gunball.MapObject
 
         public void SetKnockbackTimer(float time){return;}
 
-        public void DoDamage(float damage, Player source = null){return;}
-        public void RecoverDamage(float healing, Player source = null){return;}
+        public void DoDamage(float damage, IDamageSource source = null){return;}
+        public void RecoverDamage(float healing, IDamageSource source = null){return;}
 
-        public void DoDeath(Player cause = null)
+        public void DoDeath(IDamageSource cause = null)
         {
             if (_owner != null)
             {

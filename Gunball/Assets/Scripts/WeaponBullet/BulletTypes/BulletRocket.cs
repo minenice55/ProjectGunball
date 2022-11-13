@@ -7,13 +7,13 @@ namespace Gunball.WeaponSystem
 {
     public class BulletRocket : BulletBase
     {
-
         [SerializeField] GameObject BlastPrefab;
         WeaponBase.MoveBlastParam BlastParam;
-        public void SetupBullet(Transform weaponPos, Transform playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
+        public void SetupBullet(Vector3 weaponPos, Vector3 playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
             WeaponBase.CollisionParam colPrm,
             WeaponBase.MoveBlastParam movePrm,
-            WeaponBase.DamageParam dmgPrm)
+            WeaponBase.DamageParam dmgPrm,
+            float postDelay = 0)
         {
             base.SetupBullet(weaponPos, playRootPos, facing, owner, ignoreColliders, colPrm, movePrm.MoveSimpleParam, dmgPrm);
             BlastParam = movePrm;
@@ -55,7 +55,7 @@ namespace Gunball.WeaponSystem
             base.DoOnCollisionKill(pos, hit);
             GameObject.Instantiate(BlastPrefab, pos, Quaternion.identity);
             BulletBlast blast = BlastPrefab.GetComponent<BulletBlast>();
-            blast.DoBlast(BlastParam.BlastSimpleParam, pos);
+            blast.DoBlast(BlastParam.BlastSimpleParam, pos, owner);
         }
 
         protected override void DoOnCollisionKill(Vector3 pos)
@@ -63,7 +63,7 @@ namespace Gunball.WeaponSystem
             base.DoOnCollisionKill(pos);
             GameObject.Instantiate(BlastPrefab, pos, Quaternion.identity);
             BulletBlast blast = BlastPrefab.GetComponent<BulletBlast>();
-            blast.DoBlast(BlastParam.BlastSimpleParam, pos);
+            blast.DoBlast(BlastParam.BlastSimpleParam, pos, owner);
         }
     }
 }
