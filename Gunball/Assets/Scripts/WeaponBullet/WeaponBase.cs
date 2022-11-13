@@ -71,8 +71,7 @@ namespace Gunball.WeaponSystem
                 if (_netWeapon.IsOwner)
                     _netWeapon.NetCreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection);
             }
-            else
-                CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
+            CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
             player.InFireCoroutine = false;
         }
         public virtual void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0) { }

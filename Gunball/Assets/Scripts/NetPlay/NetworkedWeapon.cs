@@ -18,7 +18,6 @@ namespace Gunball
         public void NetCreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
         {
             CreateWeaponBulletServerRpc(rootPos, spawnPos, facing, NetworkManager.LocalTime.Time);
-            _weapon.CreateWeaponBullet(rootPos, spawnPos, facing, _weapon.Owner);
         }
 
         [ServerRpc]
@@ -33,7 +32,7 @@ namespace Gunball
             if (!IsOwner)
             {
                 var delay = serverTime - NetworkManager.ServerTime.Time;
-                delay = Mathf.Max((float)delay, 0);
+                delay = Mathf.Min((float)delay, 0);
                 _weapon.CreateWeaponBullet(rootPos, spawnPos, facing, _weapon.Owner, (float)delay);
             }
         }

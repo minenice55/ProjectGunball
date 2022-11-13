@@ -93,15 +93,23 @@ namespace Gunball
         }
 
 #region Remote Procedure Calls
-        [ServerRpc]
-        public void SetupKitWeaponsServerRpc()
+        [ServerRpc(RequireOwnership = false)]
+        public void SetupKitWeaponsServerRpc(ServerRpcParams serverRpcParams = default)
         {
+            var clientId = serverRpcParams.Receive.SenderClientId;
             for (int i = 0; i < _player.WeaponNames.Length; i++)
             {
                 GameObject WpGO = GameCoordinator.instance.CreatePlayerWeapon(_player.WeaponNames[i]);
-                _player.RegisterKitWeapon(_player.WeaponNames[i], WpGO);
-                WpGO.GetComponent<NetworkObject>().SpawnWithOwnership(OwnerClientId);
+                WpGO.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+                RegisterKitWeaponClientRpc(i, WpGO.GetComponent<NetworkObject>().NetworkObjectId);
             }
+        }
+
+        [ClientRpc]
+        public void RegisterKitWeaponClientRpc(int wpNameIndex, ulong wpNetId)
+        {
+            GameObject WpGO = NetworkManager.SpawnManager.SpawnedObjects[wpNetId].gameObject;
+            _player.RegisterKitWeapon(_player.WeaponNames[wpNameIndex], WpGO);
         }
 
         public void NetInflictDamage(float damage, IShootableObject target)
