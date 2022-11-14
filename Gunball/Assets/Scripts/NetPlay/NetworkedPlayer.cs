@@ -19,6 +19,11 @@ namespace Gunball
         Vector3 lerpVel;
         Vector3 lerpTarget;
         float lastGroundRotation;
+
+        Vector3 respawnStart;
+        Vector3 respawnEnd;
+        float respawnTime;
+        
         NetworkVariable<NetworkedPlayerState> _netState = new NetworkVariable<NetworkedPlayerState>(readPerm: NetworkVariableReadPermission.Everyone, writePerm: NetworkVariableWritePermission.Owner);
         NetworkedPlayerState PlayerState { get => _netState.Value; set => _netState.Value = value; }
 
@@ -64,20 +69,31 @@ namespace Gunball
                     AimingAngle = _player.AimingAngle,
                     LastGroundRotation = _player.VisualModel.transform.rotation.eulerAngles.y,
                     Health = _player.Health,
+                    RespawnStartPos = _player.RespawnStart,
+                    RespawnEndPos = _player.RespawnEnd,
+                    RespawnTime = _player.RespawnTime,
                 };
             }
             else
             {
-                transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
-                Quaternion targetRot = Quaternion.Euler(0, lastGroundRotation, 0);
-                if (_player.IsOnGround)
+                if (respawnTime > 0)
                 {
-                    _player.VisualModel.transform.rotation = Quaternion.Slerp(_player.VisualModel.transform.rotation, targetRot, 90f * Time.deltaTime);
+                    lerpTarget = Vector3.Lerp(respawnStart, respawnEnd, 1f - Mathf.Clamp01(respawnTime));
+                    transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
                 }
                 else
                 {
-                    targetRot = Player.TiltRotationTowardsVelocity(targetRot, Vector3.up, _player.Velocity, _player.SpeedStat * 32f);
-                    _player.VisualModel.transform.rotation = Quaternion.Slerp(_player.VisualModel.transform.rotation, targetRot, 90f * Time.deltaTime);
+                    transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
+                    Quaternion targetRot = Quaternion.Euler(0, lastGroundRotation, 0);
+                    if (_player.IsOnGround)
+                    {
+                        _player.VisualModel.transform.rotation = Quaternion.Slerp(_player.VisualModel.transform.rotation, targetRot, 90f * Time.deltaTime);
+                    }
+                    else
+                    {
+                        targetRot = Player.TiltRotationTowardsVelocity(targetRot, Vector3.up, _player.Velocity, _player.SpeedStat * 32f);
+                        _player.VisualModel.transform.rotation = Quaternion.Slerp(_player.VisualModel.transform.rotation, targetRot, 90f * Time.deltaTime);
+                    }
                 }
             }
         }
@@ -90,6 +106,24 @@ namespace Gunball
             transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
             lastGroundRotation = newState.LastGroundRotation;
             _player.Health = newState.Health;
+            respawnStart = newState.RespawnStartPos;
+            respawnEnd = newState.RespawnEndPos;
+            respawnTime = newState.RespawnTime;
+
+            if (_player.IsDead)
+            {
+                _player.VisualModel.SetActive(false);
+            }
+            else
+            {
+                _player.VisualModel.SetActive(true);
+            }
+            _player.SetNoClip(_player.IsDead && respawnTime <= 0);
+            if (lastState.Health <= 0 && newState.Health > 0)
+            {
+                transform.position = respawnStart;
+                _player.VisualModel.transform.LookAt(respawnEnd);
+            }
         }
 
 #region Remote Procedure Calls
@@ -193,6 +227,10 @@ namespace Gunball
 
             float health;
 
+            Vector3 respawnStart;
+            Vector3 respawnEnd;
+            short respawnTime;
+
             public Vector3 Position { get => position; set => position = value; }
             public Vector3 Velocity { get => velocity; set => velocity = value; }
             public Vector3 AimingAngle { 
@@ -209,6 +247,10 @@ namespace Gunball
 
             public float Health { get => health; set => health = value; }
 
+            public Vector3 RespawnStartPos { get => respawnStart; set => respawnStart = value; }
+            public Vector3 RespawnEndPos { get => respawnEnd; set => respawnEnd = value; }
+            public float RespawnTime { get => respawnTime; set => respawnTime = (short)value; }
+
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
                 serializer.SerializeValue(ref position);
@@ -219,6 +261,10 @@ namespace Gunball
                 serializer.SerializeValue(ref groundRotationOrAirBasis);
 
                 serializer.SerializeValue(ref health);
+
+                serializer.SerializeValue(ref respawnStart);
+                serializer.SerializeValue(ref respawnEnd);
+                serializer.SerializeValue(ref respawnTime);
             }
         }
     }

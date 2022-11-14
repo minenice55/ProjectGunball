@@ -16,15 +16,29 @@ namespace Gunball
         public override void OnNetworkSpawn() {
             _weapon = GetComponent<WeaponBase>();
             _ownerId.OnValueChanged += SyncOwner;
+
+            if (NetworkManager.SpawnManager.SpawnedObjects.ContainsKey(OwnerId))
+            {
+                GameObject newOwner = NetworkManager.SpawnManager.SpawnedObjects[OwnerId].gameObject;
+                if (newOwner != null)
+                {
+                    _weapon.SetOwner(newOwner);
+                }
+            }
         }
 
         public void SetOwner(GameObject owner)
         {
-            OwnerId = owner.GetComponent<NetworkObject>().NetworkObjectId;
+            if (IsOwner)
+            {
+                OwnerId = owner.GetComponent<NetworkObject>().NetworkObjectId;
+                Debug.Log("SetOwner: " + OwnerId);
+            }
         }
 
         public void SyncOwner(ulong oldOwner, ulong newOwner)
         {
+            Debug.Log("SyncOwner: " + newOwner);
             _weapon.SetOwner(NetworkManager.SpawnManager.SpawnedObjects[newOwner].gameObject);
         }
 

@@ -99,6 +99,10 @@ namespace Gunball.MapObject
         public Vector3 AimingAngle { get => new Vector3(playerCamera.transform.rotation.eulerAngles.x, playerCamera.transform.rotation.eulerAngles.y, 0); set => _aimingInput = value; }
         public float SpeedStat { get => IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed; }
         public float AccelStat { get => IsOnGround ? playPrm.Move_RunAccel : playPrm.Move_AirAccel; }
+
+        public float RespawnTime { get => respawnRamTime; }
+        public Vector3 RespawnStart { get => respawnStart; }
+        public Vector3 RespawnEnd { get => respawnEnd; }
         #endregion
 
         #region Built-Ins
@@ -208,19 +212,19 @@ namespace Gunball.MapObject
                 SetNullWeapon();
                 throw new Exception("ChangeWeapon: prefab is not a weapon base!");
             }
+            if (_netPlayer != null && _netPlayer.IsOwner)
+            {
+                WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
+            }
             newWeapon.SetOwner(gameObject);
             Weapon = newWeapon;
             guideMgr.SetWeapon(Weapon);
             guideMgr.UpdateGuide();
-            if (_netPlayer != null)
-            {
-                WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
-            }
         }
 
         void SetNullWeapon()
         {
-            if (Weapon != null && Weapon.gameObject != null && !Weapon.IsGlobalWeapon)
+            if (Weapon != null && Weapon.gameObject != null && Weapon.IsGlobalWeapon)
             {
                 if (_netPlayer != null) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
             }
@@ -536,7 +540,7 @@ namespace Gunball.MapObject
             _playController.velocity = new Vector3(Velocity.x, playPrm.Jump_Shortening, Velocity.z);
         }
 
-        void SetNoClip(bool noClip = false)
+        public void SetNoClip(bool noClip = false)
         {
             _playController.detectCollisions = !noClip;
             _playController.useGravity = !noClip;
