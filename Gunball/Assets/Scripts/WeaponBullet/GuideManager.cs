@@ -92,14 +92,7 @@ namespace Gunball.WeaponSystem
                     }
 
                     bool ignore = false;
-                    for (int k = 0; k < Wpn.IgnoreColliders.Length; k++)
-                    {
-                        if (hitsBuffer[j].collider == Wpn.IgnoreColliders[k])
-                        {
-                            ignore = true;
-                            break;
-                        }
-                    }
+                    if (hitsBuffer[j].collider.gameObject == Wpn.Owner.gameObject) continue;
                     if (ignore) continue;
                     // we hit something, return the position
                     lastPt = i;

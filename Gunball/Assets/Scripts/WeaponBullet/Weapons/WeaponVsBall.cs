@@ -63,7 +63,7 @@ namespace Gunball.WeaponSystem
 
         public override Vector3 OverrideSpawnPos() { return owner.BallSpawnPos.position; }
 
-        public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0)
+        public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false)
         {
             //todo: make ball compensate for net delay?
             ball.EndEffect();

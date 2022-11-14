@@ -6,13 +6,15 @@ namespace Gunball.WeaponSystem
 {
     public class BulletBlast : MonoBehaviour
     {
-        public void DoBlast(WeaponBase.BlastSimpleParam blastPrm, Vector3 pos, IDamageSource source)
+        public void DoBlast(WeaponBase.BlastSimpleParam blastPrm, Vector3 pos, IDamageSource source, bool visualOnly = false)
         {
-            List<GameObject> hitTargets = new List<GameObject>();
-            LayerMask targetMask = LayerMask.GetMask("Player", "Ball");
             gameObject.SetActive(true);
             transform.position = pos;
 
+            if (visualOnly) return;
+
+            List<GameObject> hitTargets = new List<GameObject>();
+            LayerMask targetMask = LayerMask.GetMask("Player", "Ball");
             if (blastPrm.DistanceDamage.Length != 0)
             {
                 Collider[] cols = Physics.OverlapSphere(pos, blastPrm.DistanceDamage[blastPrm.DistanceDamage.Length - 1].BlastRadius, targetMask);

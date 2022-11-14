@@ -10,9 +10,22 @@ namespace Gunball
     public class NetworkedWeapon : NetworkBehaviour
     {
         WeaponBase _weapon;
+        NetworkVariable<ulong> _ownerId = new NetworkVariable<ulong>(readPerm: NetworkVariableReadPermission.Everyone, writePerm: NetworkVariableWritePermission.Owner);
+        public ulong OwnerId { get => _ownerId.Value; set => _ownerId.Value = value; }
 
         public override void OnNetworkSpawn() {
             _weapon = GetComponent<WeaponBase>();
+            _ownerId.OnValueChanged += SyncOwner;
+        }
+
+        public void SetOwner(GameObject owner)
+        {
+            OwnerId = owner.GetComponent<NetworkObject>().NetworkObjectId;
+        }
+
+        public void SyncOwner(ulong oldOwner, ulong newOwner)
+        {
+            _weapon.SetOwner(NetworkManager.SpawnManager.SpawnedObjects[newOwner].gameObject);
         }
 
         public void NetCreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
@@ -33,7 +46,7 @@ namespace Gunball
             {
                 var delay = serverTime - NetworkManager.ServerTime.Time;
                 delay = Mathf.Min((float)delay, 0);
-                _weapon.CreateWeaponBullet(rootPos, spawnPos, facing, _weapon.Owner, (float)delay);
+                _weapon.CreateWeaponBullet(rootPos, spawnPos, facing, _weapon.Owner, (float)delay, true);
             }
         }
 

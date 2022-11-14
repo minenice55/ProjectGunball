@@ -30,7 +30,6 @@ namespace Gunball.MapObject
         #region Serialized Components
         [SerializeField] Camera playerCamera;
         [SerializeField] Transform playerCameraTarget;
-        [SerializeField] Transform weaponPos;
         [SerializeField] Transform vsBallPos;
         [SerializeField] Transform vsWpnBallPos;
         [SerializeField] CinemachineFreeLook playerCineCamera;
@@ -44,6 +43,7 @@ namespace Gunball.MapObject
         #endregion
 
         #region Public Variables
+        [SerializeField] public Transform weaponPos;
         [SerializeField] public string[] WeaponNames;
         [NonSerialized] public WeaponBase Weapon;
         [NonSerialized] public PlayerState State;
@@ -208,11 +208,14 @@ namespace Gunball.MapObject
                 SetNullWeapon();
                 throw new Exception("ChangeWeapon: prefab is not a weapon base!");
             }
-            newWeapon.SetOwner(gameObject, weaponPos);
+            newWeapon.SetOwner(gameObject);
             Weapon = newWeapon;
             guideMgr.SetWeapon(Weapon);
             guideMgr.UpdateGuide();
-            if (_netPlayer != null) WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
+            if (_netPlayer != null)
+            {
+                WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
+            }
         }
 
         void SetNullWeapon()

@@ -49,11 +49,11 @@ namespace Gunball.WeaponSystem
         public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
         public override float GetGuideWidth() { return GuidePrm.GuideWidth; }
 
-        public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0)
+        public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false)
         {
             GameObject bullet = Instantiate(BulletObject, spawnPos, Quaternion.identity);
             BulletBase bulletBase = bullet.GetComponent<BulletBase>();
-            bulletBase.SetupBullet(spawnPos, rootPos, facing, player, IgnoreColliders, ColPrm, MovePrm, DmgPrm, postDelay);
+            bulletBase.SetupBullet(spawnPos, rootPos, facing, player, ColPrm, MovePrm, DmgPrm, postDelay, visualOnly);
             bullet.SetActive(true);
         }
     }

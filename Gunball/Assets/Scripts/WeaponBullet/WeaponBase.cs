@@ -44,12 +44,17 @@ namespace Gunball.WeaponSystem
         {
             facingDirection = dir;
         }
-        public void SetOwner(GameObject owner, Transform weaponPos)
+        public void SetOwner(GameObject owner)
         {
             this.owner = owner.GetComponent<Player>();
             RootSpawnPos = owner.transform;
-            BulletSpawnPos = weaponPos;
+            BulletSpawnPos = this.owner.weaponPos;
             IgnoreColliders = owner.GetComponentsInChildren<Collider>();
+
+            if (_netWeapon != null && _netWeapon.IsOwner)
+            {
+                _netWeapon.SetOwner(owner);
+            }
         }
         #endregion
 
@@ -69,12 +74,16 @@ namespace Gunball.WeaponSystem
             if (_netWeapon != null)
             {
                 if (_netWeapon.IsOwner)
+                {
                     _netWeapon.NetCreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection);
+                    CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
+                }
             }
-            CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
+            else
+                CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
             player.InFireCoroutine = false;
         }
-        public virtual void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0) { }
+        public virtual void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false) { }
         public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm)
         {
             if (heldDuration <= 0 && relaxDuration > 0)

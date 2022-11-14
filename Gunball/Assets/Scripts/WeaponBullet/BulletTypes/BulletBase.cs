@@ -12,21 +12,21 @@ namespace Gunball.WeaponSystem
         protected Player owner;
         protected Vector3 startPos;
         protected Vector3 rootPos;
-        protected Collider[] ignoreColliders;
         protected Vector3 facingDirection;
         protected Vector3[] castPoints;
         protected WeaponBase.CollisionParam ColPrm;
         protected WeaponBase.MoveSimpleParam MovePrm;
         protected WeaponBase.DamageParam DmgPrm;
+        protected bool visualOnly;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
         LayerMask TerrainMask;
 
-        public virtual void SetupBullet(Vector3 weaponPos, Vector3 playRootPos, Vector3 facing, Player owner, Collider[] ignoreColliders,
+        public virtual void SetupBullet(Vector3 weaponPos, Vector3 playRootPos, Vector3 facing, Player owner,
             WeaponBase.CollisionParam colPrm,
             WeaponBase.MoveSimpleParam movePrm,
             WeaponBase.DamageParam dmgPrm,
-            float postDelay = 0)
+            float postDelay = 0, bool visualOnly = false)
         {
             ColPrm = colPrm;
             MovePrm = movePrm;
@@ -36,8 +36,8 @@ namespace Gunball.WeaponSystem
             rootPos = playRootPos;
             transform.position = startPos;
             facingDirection = facing;
-            this.ignoreColliders = ignoreColliders;
             this.owner = owner;
+            this.visualOnly = visualOnly;
             TerrainMask = LayerMask.GetMask("Ground", "Wall", "MapObjectSolid");
             DoBulletMove(postDelay, out Vector3 pos);
         }
@@ -65,6 +65,7 @@ namespace Gunball.WeaponSystem
 
         protected virtual void DoOnCollisionKill(Vector3 pos, RaycastHit hit)
         {
+            if (visualOnly) return;
             IShootableObject hitObj = hit.collider.GetComponent<IShootableObject>();
             if (hitObj != null)
             {
@@ -138,16 +139,7 @@ namespace Gunball.WeaponSystem
                             }
 
                             //then check ignore list
-                            bool ignore = false;
-                            for (int k = 0; k < ignoreColliders.Length; k++)
-                            {
-                                if (hitsBuffer[j].collider == ignoreColliders[k])
-                                {
-                                    ignore = true;
-                                    break;
-                                }
-                            }
-                            if (ignore) continue;
+                            if (hitsBuffer[j].collider.gameObject == owner.gameObject) continue;
                             colPosition = hitsBuffer[j].point;
                             hit = hitsBuffer[j];
                             return true;
