@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 3215133301806528987}
   - component: {fileID: -6133585173045518172}
+  - component: {fileID: 5782759704803435052}
+  - component: {fileID: -5594037447218480283}
   m_Layer: 0
   m_Name: WeaponVsBall
   m_TagString: Untagged
@@ -55,6 +57,7 @@ MonoBehaviour:
   BulletSpawnPos: {fileID: 0}
   BulletObject: {fileID: 1985834611839278286, guid: 54f5d7f3d30aada47b91da5ccb1858df,
     type: 3}
+  IsGlobalWeapon: 1
   IgnoreColliders: []
   GuidePrm:
     ShotGuideSecs: 4
@@ -84,3 +87,31 @@ MonoBehaviour:
     MinChargeSpeed: 16
     MaxChargeSpeed: 24
   ball: {fileID: 0}
+--- !u!114 &5782759704803435052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761452619116843522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02eccae355126dc4cb2496e2a60b23bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-5594037447218480283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 761452619116843522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 951099334
+  AlwaysReplicateAsRoot: 0
+  DontDestroyWithOwner: 1
+  AutoObjectParentSync: 1

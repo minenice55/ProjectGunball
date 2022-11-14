@@ -3,11 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using UnityEngine;
-using Gunball.WeaponSystem;
 using Gunball.MapObject;
 namespace Gunball.WeaponSystem
 {
-    public class WeaponBulletMgr : MonoBehaviour
+    public class WeaponBase : MonoBehaviour
     {
         [SerializeField] public WeaponParam WpPrm;
         public const float STEP_TIME = 1 / 30f;
@@ -17,11 +16,16 @@ namespace Gunball.WeaponSystem
         [SerializeField] protected GameObject BulletObject;
 
         public Vector3 FacingDirection { get { return facingDirection; } }
+        public Player Owner { get { return owner; } }
+
+        public bool IsGlobalWeapon = true;
 
         public Collider[] IgnoreColliders;
         protected Vector3 facingDirection;
         protected float nextFireTime = 0, lastActionTime = Single.MinValue;
         protected Player owner;
+
+        protected NetworkedWeapon _netWeapon;
 
         public enum GuideType
         {
@@ -32,33 +36,55 @@ namespace Gunball.WeaponSystem
         }
 
         #region Methods
+        void Start()
+        {
+            _netWeapon = GetComponent<NetworkedWeapon>();
+        }
         public void SetFacingDirection(Vector3 dir)
         {
             facingDirection = dir;
         }
-        public void SetOwner(GameObject owner, Transform weaponPos)
+        public void SetOwner(GameObject owner)
         {
             this.owner = owner.GetComponent<Player>();
             RootSpawnPos = owner.transform;
-            BulletSpawnPos = weaponPos;
+            BulletSpawnPos = this.owner.weaponPos;
             IgnoreColliders = owner.GetComponentsInChildren<Collider>();
+
+            if (_netWeapon != null && _netWeapon.IsOwner)
+            {
+                Debug.Log("WeaponBase.SetOwner: " + owner.name);
+                _netWeapon.SetOwner(owner);
+            }
         }
         #endregion
 
         #region Virtual Methods
         public virtual void StartFireSequence(Player player)
         {
-            owner.FireCoroutine = DoFireSequence(owner);
+            if (_netWeapon != null && !_netWeapon.IsOwner) return;
+            owner.FireCoroutine = DoFireSequence(WpPrm.PreDelayTime, owner);
             owner.StartCoroutine(owner.FireCoroutine);
         }
-        public virtual IEnumerator DoFireSequence(Player player)
+        public virtual IEnumerator DoFireSequence(float delay, Player player)
         {
             player.InFireCoroutine = true;
-            yield return new WaitForSeconds(WpPrm.PreDelayTime);
-            CreateWeaponBullet(player);
+            if (delay > 0)
+                yield return new WaitForSeconds(delay);
+            
+            if (_netWeapon != null)
+            {
+                if (_netWeapon.IsOwner)
+                {
+                    _netWeapon.NetCreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection);
+                    CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
+                }
+            }
+            else
+                CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
             player.InFireCoroutine = false;
         }
-        public virtual void CreateWeaponBullet(Player player) { }
+        public virtual void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false) { }
         public virtual bool RefireCheck(float heldDuration, float relaxDuration, WeaponParam wpPrm)
         {
             if (heldDuration <= 0 && relaxDuration > 0)
@@ -234,8 +260,8 @@ namespace Gunball.WeaponSystem
             public float Force;
             [Tooltip("Radius to apply knockback in")]
             public float Radius;
-            [Tooltip("Distance to multiply force by at the edge of the radius")]
-            public float DistanceBias;
+            [Tooltip("For players, how long to ignore grounded speed cap after knockback")]
+            public float TimeBias;
             [Tooltip("Distance to multiply force by when hitting a player")]
             [DefaultValue(1f)]
             public float PlayerBias;

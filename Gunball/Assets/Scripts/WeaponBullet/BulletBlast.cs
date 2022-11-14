@@ -1,67 +1,68 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Gunball.WeaponSystem;
 using Gunball.MapObject;
 namespace Gunball.WeaponSystem
 {
     public class BulletBlast : MonoBehaviour
     {
-        WeaponBulletMgr.BlastSimpleParam BlastPrm;
-
-        public void DoBlast(WeaponBulletMgr.BlastSimpleParam blastPrm, Vector3 pos)
+        public void DoBlast(WeaponBase.BlastSimpleParam blastPrm, Vector3 pos, IDamageSource source, bool visualOnly = false)
         {
-            LayerMask playerMask = LayerMask.GetMask("Player", "Ball");
             gameObject.SetActive(true);
-            GetComponent<Animator>()?.Play("Blast");
             transform.position = pos;
-            BlastPrm = blastPrm;
 
+            if (visualOnly) return;
+
+            List<GameObject> hitTargets = new List<GameObject>();
+            LayerMask targetMask = LayerMask.GetMask("Player", "Ball");
             if (blastPrm.DistanceDamage.Length != 0)
             {
-                Collider[] cols = Physics.OverlapSphere(pos, blastPrm.DistanceDamage[blastPrm.DistanceDamage.Length - 1].BlastRadius, playerMask);
+                Collider[] cols = Physics.OverlapSphere(pos, blastPrm.DistanceDamage[blastPrm.DistanceDamage.Length - 1].BlastRadius, targetMask);
                 foreach (Collider col in cols)
                 {
-                    bool wasHit = false;
                     IShootableObject target = col.GetComponent<IShootableObject>();
-                    if (target != null)
+                    if (!hitTargets.Contains(col.gameObject))
                     {
-                        Vector3 cPoint = target.Transform.position;
-                        float dist = Vector3.Distance(pos, cPoint);
-                        for (int i = 0; i < blastPrm.DistanceDamage.Length; i++)
+                        if (target != null)
                         {
-                            if (dist <= blastPrm.DistanceDamage[i].BlastRadius)
+                            Vector3 cPoint = target.Transform.position;
+                            float dist = Vector3.Distance(pos, cPoint);
+                            for (int i = 0; i < blastPrm.DistanceDamage.Length; i++)
                             {
-                                Vector3 direction = (cPoint - transform.position).normalized;
-                                target.DoDamage(blastPrm.DistanceDamage[i].BlastDamage);
-                                float bias = 1f;
-                                WeaponBulletMgr.KnockbackParam kbPrm = blastPrm.DistanceDamage[i].Knockback;
-                                switch (target.Type)
+                                if (dist <= blastPrm.DistanceDamage[i].BlastRadius)
                                 {
-                                    case IShootableObject.ShootableType.Player:
-                                        bias = kbPrm.PlayerBias;
-                                        break;
-                                    case IShootableObject.ShootableType.VsBall:
-                                        bias = kbPrm.VsBallBias;
-                                        break;
-                                    case IShootableObject.ShootableType.MapObject:
-                                        bias = kbPrm.MapObjectBias;
-                                        break;
-                                    case IShootableObject.ShootableType.None:
-                                        continue;
+                                    Vector3 direction = (cPoint - transform.position).normalized;
+                                    source.InflictDamage(blastPrm.DistanceDamage[i].BlastDamage, target);
+                                    float bias = 1f;
+                                    WeaponBase.KnockbackParam kbPrm = blastPrm.DistanceDamage[i].Knockback;
+                                    switch (target.Type)
+                                    {
+                                        case IShootableObject.ShootableType.Player:
+                                            bias = kbPrm.PlayerBias;
+                                            break;
+                                        case IShootableObject.ShootableType.VsBall:
+                                            bias = kbPrm.VsBallBias;
+                                            break;
+                                        case IShootableObject.ShootableType.MapObject:
+                                            bias = kbPrm.MapObjectBias;
+                                            break;
+                                        case IShootableObject.ShootableType.None:
+                                            continue;
+                                    }
+                                    source.InflictKnockback(direction * kbPrm.Force * bias, cPoint, kbPrm.TimeBias, target);
+                                    hitTargets.Add(col.gameObject);
+                                    break; 
                                 }
-                                target.Knockback(direction * kbPrm.Force * bias, pos);
-                                wasHit = true;
-                                break; 
                             }
                         }
                     }
-                    if (wasHit)
-                    {
-                        break;
-                    }
                 }
             }
+        }
+
+        void Start()
+        {
+            GetComponent<Animator>()?.Play("Blast");
         }
 
         // use in animations

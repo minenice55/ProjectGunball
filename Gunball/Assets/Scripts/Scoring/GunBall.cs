@@ -18,8 +18,8 @@ namespace Gunball.MapObject
         float _health = 1000f;
         [SerializeField] Vector3 SpawnPos;
         [SerializeField] Rigidbody _rigidbody;
-        [SerializeField] GameObject ballBulletPrefab;
         [SerializeField] TrailRenderer trail;
+        [SerializeField] string ballWeaponName = "Wpo_VsBall";
 
         #region Properties
         public float MaxHealth => 10000f;
@@ -42,6 +42,7 @@ namespace Gunball.MapObject
         void Start()
         {
             origScale = transform.localScale;
+            GameCoordinator.instance.CreateGlobalWeapon(ballWeaponName);
         }
 
         void Update()
@@ -69,16 +70,12 @@ namespace Gunball.MapObject
             _rigidbody.AddForceAtPosition(force, pos, ForceMode.Impulse);
         }
 
-        public void DoDamage(float damage, Player source = null)
-        {
-            return;
-        }
-        public void RecoverDamage(float healing, Player source = null)
-        {
-            return;
-        }
+        public void SetKnockbackTimer(float time){return;}
 
-        public void DoDeath(Player cause = null)
+        public void DoDamage(float damage, IDamageSource source = null){return;}
+        public void RecoverDamage(float healing, IDamageSource source = null){return;}
+
+        public void DoDeath(IDamageSource cause = null)
         {
             if (_owner != null)
             {
@@ -99,7 +96,7 @@ namespace Gunball.MapObject
             _owner = player;
             _owner.VsBall = this;
 
-            _owner.ChangeWeapon(ballBulletPrefab);
+            _owner.ChangeWeapon(ballWeaponName);
             ((WeaponVsBall)_owner.Weapon).SetBall(this);
 
             transform.position = _owner.BallPickupPos.position;

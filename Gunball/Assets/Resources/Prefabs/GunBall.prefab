@@ -185,9 +185,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48979e9664de1494daf5b803c3def8c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SpawnPos: {x: 0, y: 0, z: 0}
   _rigidbody: {fileID: 8367525460847343380}
-  ballBulletPrefab: {fileID: 761452619116843522, guid: 4242d88b63a97134a890ecc2dd274103,
-    type: 3}
+  trail: {fileID: 660930348745397245}
+  ballWeaponName: Wpo_VsBall
 --- !u!1 &3007547330824948226
 GameObject:
   m_ObjectHideFlags: 0

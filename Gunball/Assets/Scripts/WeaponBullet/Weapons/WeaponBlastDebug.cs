@@ -5,7 +5,7 @@ using Gunball.WeaponSystem;
 using Gunball.MapObject;
 namespace Gunball.WeaponSystem
 {
-    public class WeaponBlastDebug : WeaponBulletMgr
+    public class WeaponBlastDebug : WeaponBase
     {
         [SerializeField] GuideParam GuidePrm;
         [SerializeField] CollisionParam ColPrm;
@@ -50,11 +50,11 @@ namespace Gunball.WeaponSystem
 
         public override float GetGuideRadius() { return GuidePrm.GuideRadius; }
 
-        public override void CreateWeaponBullet(Player player)
+        public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false)
         {
-            GameObject bullet = Instantiate(BulletObject, BulletSpawnPos.position, Quaternion.identity);
+            GameObject bullet = Instantiate(BulletObject, spawnPos, Quaternion.identity);
             BulletRocket bulletBase = bullet.GetComponent<BulletRocket>();
-            bulletBase.SetupBullet(BulletSpawnPos, RootSpawnPos, facingDirection, player, IgnoreColliders, ColPrm, BlastPrm, DmgPrm);
+            bulletBase.SetupBullet(spawnPos, rootPos, facing, player, ColPrm, BlastPrm, DmgPrm, postDelay, visualOnly);
             bullet.SetActive(true);
         }
     }

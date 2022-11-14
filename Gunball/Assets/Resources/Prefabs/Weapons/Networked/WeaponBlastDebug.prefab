@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 7433092596714876436}
   - component: {fileID: -1465482954941490536}
+  - component: {fileID: -8364660458018097615}
+  - component: {fileID: -1988599220384882656}
   m_Layer: 0
   m_Name: WeaponBlastDebug
   m_TagString: Untagged
@@ -55,6 +57,7 @@ MonoBehaviour:
   BulletSpawnPos: {fileID: 0}
   BulletObject: {fileID: 568297050330448013, guid: a6e006700ea11b843a897681beba73dc,
     type: 3}
+  IsGlobalWeapon: 1
   IgnoreColliders:
   - {fileID: 0}
   - {fileID: 0}
@@ -90,7 +93,7 @@ MonoBehaviour:
         Knockback:
           Force: 15
           Radius: 2
-          DistanceBias: 1
+          TimeBias: 0.25
           PlayerBias: 1
           VsBallBias: 0.75
           MapObjectBias: 0.25
@@ -99,19 +102,47 @@ MonoBehaviour:
         Knockback:
           Force: 10
           Radius: 5
-          DistanceBias: 1
+          TimeBias: 0.1
           PlayerBias: 1
           VsBallBias: 0.8
           MapObjectBias: 0.25
   DmgPrm:
-    DamageMax: 75
-    DamageMin: 50
+    DamageMax: 55
+    DamageMin: 20
     ReduceStartTime: 0.6
     ReduceEndTime: 1
     Knockback:
       Force: 20
       Radius: 0
-      DistanceBias: 0
+      TimeBias: 0
       PlayerBias: 0
       VsBallBias: 1
       MapObjectBias: 0
+--- !u!114 &-8364660458018097615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608944910334134867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02eccae355126dc4cb2496e2a60b23bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &-1988599220384882656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2608944910334134867}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  GlobalObjectIdHash: 951099334
+  AlwaysReplicateAsRoot: 0
+  DontDestroyWithOwner: 1
+  AutoObjectParentSync: 1
