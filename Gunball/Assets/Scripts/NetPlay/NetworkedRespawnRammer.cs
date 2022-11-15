@@ -89,6 +89,32 @@ namespace Gunball
             }
         }
 
+        [ServerRpc]
+        public void DoRammerPrepareServerRpc()
+        {
+            DoRammerPrepareClientRpc();
+        }
+
+        [ClientRpc]
+        public void DoRammerPrepareClientRpc()
+        {
+            if (!IsOwner)
+                _rammer.PlayRammerPrepare();
+        }
+
+        [ServerRpc]
+        public void DoRammerFireServerRpc()
+        {
+            DoRammerFireClientRpc();
+        }
+
+        [ClientRpc]
+        public void DoRammerFireClientRpc()
+        {
+            if (!IsOwner)
+                _rammer.PlayRammerFire();
+        }
+
         public struct NetworkedRammerState : INetworkSerializable
         {
             Vector3 aimingAt;

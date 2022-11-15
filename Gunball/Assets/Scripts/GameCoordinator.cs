@@ -12,6 +12,7 @@ namespace Gunball
     {
         [SerializeField] public RespawnPoint[] respawnPoints;
         [SerializeField] public GameObject rammerPrefab;
+        [SerializeField] public Color[] teamColours;
         public int assignedRespawnPoints = 0;
         public static GameCoordinator instance;
         public List<WeaponEntry> weapons;
@@ -94,12 +95,25 @@ namespace Gunball
 
                 GameObject rammer = Instantiate(rammerPrefab, pos, facing);
                 rammer.GetComponent<RespawnRammer>().SetOwner(player);
+                rammer.GetComponent<RespawnRammer>().SetTeam(respawnPoints[pointNum].ObjectTeam);
 
                 assignedRespawnPoints++;
             }
             else
             {
                 _netCoordinator.AssignRespawnPointServerRpc();
+            }
+        }
+
+        public Color GetTeamColor(ITeamObject.Teams team)
+        {
+            if (teamColours.Length > (int)team)
+            {
+                return teamColours[(int)team];
+            }
+            else
+            {
+                return Color.white;
             }
         }
     }

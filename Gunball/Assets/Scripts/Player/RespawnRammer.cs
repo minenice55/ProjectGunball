@@ -5,7 +5,7 @@ using Cinemachine;
 
 namespace Gunball.MapObject
 {
-    public class RespawnRammer : MonoBehaviour
+    public class RespawnRammer : MonoBehaviour, ITeamObject
     {
         [SerializeField] Player owner;
         [SerializeField] Transform noPoseTarget;
@@ -23,9 +23,13 @@ namespace Gunball.MapObject
         Vector3 targetPosition;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
+        ITeamObject.Teams _team;
+
         NetworkedRespawnRammer _netRammer;
         public Vector3 AimingAt { get => targetPosition; }
         public Transform VisualModel { get => visTransform; }
+        public bool Aiming { get => _aiming; }
+        public ITeamObject.Teams ObjectTeam { get => _team; }
 
         // Start is called before the first frame update
         void Start()
@@ -49,6 +53,8 @@ namespace Gunball.MapObject
                     _aiming = false;
                     owner.FinishRespawnSequence(respawnPosition.position, targetPosition, pov.m_HorizontalAxis.Value + transform.rotation.eulerAngles.y);
                     anim.Play("RespawnFire");
+                    if (_netRammer != null && _netRammer.IsOwner)
+                        _netRammer.DoRammerFireServerRpc();
                 }
             }
             else
@@ -68,6 +74,7 @@ namespace Gunball.MapObject
         {
             this.owner = owner.GetComponent<Player>();
             this.owner.SetRespawnRammer(this);
+            this.owner.SetTeam(_team);
             if (_netRammer != null && _netRammer.IsOwner)
             {
                 _netRammer.SetOwner(owner);
@@ -80,6 +87,8 @@ namespace Gunball.MapObject
             CinemachineSwitcher.SwitchTo(cutinCam);
             anim.Play("RespawnPrepare");
             owner.transform.position = respawnPosition.position;
+            if (_netRammer != null && _netRammer.IsOwner)
+                _netRammer.DoRammerPrepareServerRpc();
             Invoke("StartAimingSequence", 0.5f);
         }
 
@@ -92,6 +101,16 @@ namespace Gunball.MapObject
         public void EnableAiming()
         {
             _aiming = true;
+        }
+
+        public void PlayRammerPrepare()
+        {
+            anim.Play("RespawnPrepare");
+        }
+
+        public void PlayRammerFire()
+        {
+            anim.Play("RespawnFire");
         }
 
         float DistanceFromPoint(Vector3 point1, Vector3 point2)
@@ -140,6 +159,11 @@ namespace Gunball.MapObject
                     return;
                 }
             }
+        }
+
+        public void SetTeam(ITeamObject.Teams team)
+        {
+            _team = team;
         }
     }
 }

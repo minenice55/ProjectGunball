@@ -1,5 +1,96 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1637445177607897960
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3198238444474004665}
+  - component: {fileID: 5279992666802856600}
+  - component: {fileID: 2758895028533252901}
+  - component: {fileID: 4541706921130090619}
+  m_Layer: 0
+  m_Name: GuideRespawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3198238444474004665
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637445177607897960}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2264275875078957890}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 48, y: 48}
+  m_Pivot: {x: 0.5, y: 0.1}
+--- !u!222 &5279992666802856600
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637445177607897960}
+  m_CullTransparentMesh: 1
+--- !u!114 &2758895028533252901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637445177607897960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 4913be88fbaecf8479e18f820ec26299, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &4541706921130090619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637445177607897960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
+  m_EffectDistance: {x: 0, y: 2}
+  m_UseGraphicAlpha: 1
 --- !u!1 &2254897270315695059
 GameObject:
   m_ObjectHideFlags: 0
@@ -375,6 +466,7 @@ RectTransform:
   m_Children:
   - {fileID: 5965547032253508133}
   - {fileID: 1149844270543134924}
+  - {fileID: 3198238444474004665}
   m_Father: {fileID: 1977207414494521829}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -416,10 +508,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1280, y: 720}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -1076,7 +1168,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCamera: {fileID: 2786579938625622657}
   playerCameraTarget: {fileID: 6532357023631042641}
-  weaponPos: {fileID: 597372343696887889}
   vsBallPos: {fileID: 8462955016767658057}
   vsWpnBallPos: {fileID: 1989388466079014238}
   playerCineCamera: {fileID: 6859216385283850612}
@@ -1101,10 +1192,11 @@ MonoBehaviour:
   guideMgr: {fileID: 2870239283765865174}
   aimOffset: {x: 0.045, y: 0, z: 0}
   _playCollider: {fileID: 6514274299359613823}
+  respawnRammer: {fileID: 0}
+  weaponPos: {fileID: 597372343696887889}
   WeaponNames:
   - Wpp_DebugBlast
   - Wps_DebugGuide
-  respawnRammer: {fileID: 0}
 --- !u!114 &5781890385936535975
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1267,6 +1359,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   CollidingGuideRect: {fileID: 1149844270543134924}
   PredictingGuideRect: {fileID: 5965547032253508133}
+  RespawnGuideRect: {fileID: 3198238444474004665}
   GuideTarget: {fileID: 2460671966204074913}
   trajectoryRenderer: {fileID: 4771660439333424663}
 --- !u!120 &4771660439333424663
@@ -1516,7 +1609,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6487418612587701070}
-  m_LocalRotation: {x: 0.023800531, y: 0.7016418, z: -0.023462655, w: 0.7117457}
+  m_LocalRotation: {x: 0.023800533, y: 0.7016418, z: -0.023462657, w: 0.7117457}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:

@@ -8,7 +8,7 @@ using Gunball.WeaponSystem;
 
 namespace Gunball.MapObject
 {
-    public class Player : MonoBehaviour, IShootableObject, IDamageSource
+    public class Player : MonoBehaviour, IShootableObject, IDamageSource, ITeamObject
     {
         [System.Flags]
         public enum FiringType
@@ -73,6 +73,8 @@ namespace Gunball.MapObject
         Quaternion _onJmpRotation;
         FiringType _fireKeys;
 
+        ITeamObject.Teams _team;
+
         Vector3 _startPos;
         float respawnRamTime = 0f;
         Vector3 respawnStart, respawnEnd;
@@ -86,9 +88,6 @@ namespace Gunball.MapObject
         public Vector3 CameraDirection { get { return playerCamera.transform.forward; } }
         public CinemachineVirtualCamera CineCamera { get { return playerCineCamera.VirtualCameraGameObject.GetComponent<CinemachineVirtualCamera>(); } }
         public Vector3 Velocity { get { return _playController.velocity; } set { _playController.velocity = value; } }
-        public float MaxHealth { get { return playPrm.Max_Health; } }
-        public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
-        public bool IsDead { get { return _hp <= 0; } }
         public Transform Transform { get { return transform; } }
         public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
         public Transform BallPickupPos { get => vsBallPos; }
@@ -103,6 +102,13 @@ namespace Gunball.MapObject
         public float RespawnTime { get => respawnRamTime; }
         public Vector3 RespawnStart { get => respawnStart; }
         public Vector3 RespawnEnd { get => respawnEnd; }
+        #endregion
+
+        #region Inherited Properties
+        public float MaxHealth { get { return playPrm.Max_Health; } }
+        public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
+        public bool IsDead { get { return _hp <= 0; } }
+        public ITeamObject.Teams ObjectTeam { get => _team; }
         #endregion
 
         #region Built-Ins
@@ -147,6 +153,7 @@ namespace Gunball.MapObject
                     DoPlayerMovement();
                     DoWeaponLogic();
                 }
+                guideMgr.SetIsRespawnGuide(respawnRammer.Aiming, respawnRammer.AimingAt, ObjectTeam);
             }
         }
 
@@ -665,6 +672,10 @@ namespace Gunball.MapObject
 
         public void InflictKnockback(Vector3 force, Vector3 pos, float knockbackTimer, IShootableObject target)
         {
+            if ((ITeamObject) target != null)
+            {
+                if (ObjectTeam == ((ITeamObject) target).ObjectTeam && target != (IShootableObject) this) return;
+            }
             if (_netPlayer != null)
             {
                 if (_netPlayer.IsOwner)
@@ -674,14 +685,22 @@ namespace Gunball.MapObject
             target.SetKnockbackTimer(knockbackTimer);
         }
 
-        public void InflictDamage(float damage, IShootableObject target)
+        public void InflictDamage(float damage, IShootableObject target, bool doCharge = true)
         {
+            if ((ITeamObject) target != null)
+            {
+                if (ObjectTeam == ((ITeamObject) target).ObjectTeam && target != (IShootableObject) this) return;
+            }
             if (_netPlayer != null)
             {
                 if (_netPlayer.IsOwner)
                     _netPlayer.NetInflictDamage(damage, target);
             }
             target.DoDamage(damage, this);
+
+            //TODO: call a build super charge function passing the damage (may have to make sure supers don't build off themselves)
+            // if (doCharge)
+            // {}
         }
 
         public void InflictHealing(float healing, IShootableObject target)
@@ -692,6 +711,11 @@ namespace Gunball.MapObject
                     _netPlayer.NetInflictHealing(healing, target);
             }
             target.RecoverDamage(healing, this);
+        }
+
+        public void SetTeam(ITeamObject.Teams team)
+        {
+            _team = team;
         }
         #endregion
 

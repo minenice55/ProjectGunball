@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 using Gunball.MapObject;
 using Gunball.WeaponSystem;
+
 namespace Gunball.WeaponSystem
 {
     public class GuideManager : MonoBehaviour
@@ -11,6 +13,7 @@ namespace Gunball.WeaponSystem
 
         [SerializeField] RectTransform CollidingGuideRect;
         [SerializeField] RectTransform PredictingGuideRect;
+        [SerializeField] RectTransform RespawnGuideRect;
         [SerializeField] Transform GuideTarget;
         [SerializeField] LineRenderer trajectoryRenderer;
 
@@ -21,7 +24,8 @@ namespace Gunball.WeaponSystem
 
         public void UpdateGuide()
         {
-            trajectoryRenderer.positionCount = 0;
+            if (trajectoryRenderer != null)
+                trajectoryRenderer.positionCount = 0;
             if (Wpn == null || Wpn.GetGuideType() == WeaponBase.GuideType.None)
             {
                 CollidingGuideRect.gameObject.SetActive(false);
@@ -61,6 +65,20 @@ namespace Gunball.WeaponSystem
         public void SetWeapon(WeaponBase wpn)
         {
             Wpn = wpn;
+        }
+
+        public void SetIsRespawnGuide(bool isRespawnGuide, Vector3 respawnPos, ITeamObject.Teams team)
+        {
+            if (RespawnGuideRect != null)
+            {
+                RespawnGuideRect.gameObject.SetActive(isRespawnGuide);
+                if (isRespawnGuide)
+                {
+                    RespawnGuideRect.gameObject.GetComponent<Image>().color = GameCoordinator.instance.GetTeamColor(team);
+                    float time = Mathf.Sin(Time.time * 3f) * 0.5f + 0.5f;
+                    WorldToScreenPoint(respawnPos + Vector3.up * time * 0.5f, RespawnGuideRect);
+                }
+            }
         }
 
         Vector3 CastGuide(out Vector3 PredictionPos, out int lastPt, Vector3[] CastPoints)

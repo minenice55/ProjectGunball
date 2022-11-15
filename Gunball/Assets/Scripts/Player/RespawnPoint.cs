@@ -12,13 +12,6 @@ namespace Gunball.MapObject
         public Vector3 Position {get => transform.position;}
         public Quaternion Facing {get => transform.rotation;}
 
-    Player _player;
-
-        public void AssignPlayer(Player player)
-        {
-            _player = player;
-        }
-
         public ITeamObject.Teams ObjectTeam
         {
             get
@@ -26,5 +19,7 @@ namespace Gunball.MapObject
                 return Team;
             }
         }
+
+        public void SetTeam(ITeamObject.Teams team){}
     }
 }

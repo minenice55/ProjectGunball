@@ -14,5 +14,7 @@ namespace Gunball.MapObject
         GameObject gameObject { get; }
         public Teams ObjectTeam { get; }
 
+        public void SetTeam(Teams team);
+
     }
 }

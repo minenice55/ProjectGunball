@@ -30,6 +30,7 @@ namespace Gunball
                 Quaternion facing = _gameCoordinator.respawnPoints[pointNum].Facing;
 
                 GameObject rammer = Instantiate(_gameCoordinator.rammerPrefab, pos, facing);
+                rammer.GetComponent<RespawnRammer>().SetTeam(_gameCoordinator.respawnPoints[pointNum].ObjectTeam);
                 rammer.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
 
                 _gameCoordinator.assignedRespawnPoints++;
