@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Gunball.MapObject;
-using Gunball.WeaponSystem;
-using Cinemachine;
 
 namespace Gunball
 {
@@ -26,8 +24,6 @@ namespace Gunball
         
         NetworkVariable<NetworkedPlayerState> _netState = new NetworkVariable<NetworkedPlayerState>(readPerm: NetworkVariableReadPermission.Everyone, writePerm: NetworkVariableWritePermission.Owner);
         NetworkedPlayerState PlayerState { get => _netState.Value; set => _netState.Value = value; }
-
-        // Start is called before the first frame update
         void Start()
         {
             if (_player != null)
@@ -153,7 +149,9 @@ namespace Gunball
         [ServerRpc]
         public void InflictDamageServerRpc(float damage, ulong targetNetId, ulong sourceNetId)
         {
-            InflictDamageClientRpc(damage, targetNetId, sourceNetId);
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target != null && !target.IsDead)
+                InflictDamageClientRpc(damage, targetNetId, sourceNetId);
         }
         [ClientRpc]
         public void InflictDamageClientRpc(float damage, ulong targetNetId, ulong sourceNetId)
@@ -199,7 +197,9 @@ namespace Gunball
         [ServerRpc]
         public void InflictHealingServerRpc(float healing, ulong targetNetId, ulong sourceNetId)
         {
-            InflictHealingClientRpc(healing, targetNetId, sourceNetId);
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target != null && !target.IsDead)
+                InflictHealingClientRpc(healing, targetNetId, sourceNetId);
         }
         [ClientRpc]
         public void InflictHealingClientRpc(float healing, ulong targetNetId, ulong sourceNetId)

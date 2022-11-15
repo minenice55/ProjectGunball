@@ -23,6 +23,10 @@ namespace Gunball.MapObject
         Vector3 targetPosition;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
+        NetworkedRespawnRammer _netRammer;
+        public Vector3 AimingAt { get => targetPosition; }
+        public Transform VisualModel { get => visTransform; }
+
         // Start is called before the first frame update
         void Start()
         {
@@ -33,6 +37,7 @@ namespace Gunball.MapObject
         void Update()
         {
             if (owner == null) return;
+            if (_netRammer != null && !_netRammer.IsOwner) return;
             if (_aiming)
             {
                 redirected = false;
@@ -50,6 +55,22 @@ namespace Gunball.MapObject
             {
                 pov.m_HorizontalAxis.Value = 0;
                 pov.m_VerticalAxis.Value = 15;
+            }
+        }
+
+        public void RemoveCameras()
+        {
+            Destroy(cutinCam.gameObject);
+            Destroy(aimingCam.gameObject);
+        }
+
+        public void SetOwner(GameObject owner)
+        {
+            this.owner = owner.GetComponent<Player>();
+            this.owner.SetRespawnRammer(this);
+            if (_netRammer != null && _netRammer.IsOwner)
+            {
+                _netRammer.SetOwner(owner);
             }
         }
 

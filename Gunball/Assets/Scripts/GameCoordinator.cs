@@ -10,18 +10,31 @@ namespace Gunball
     using static WeaponDictionary;
     public class GameCoordinator : MonoBehaviour
     {
+        [SerializeField] public RespawnPoint[] respawnPoints;
+        [SerializeField] public GameObject rammerPrefab;
+        public int assignedRespawnPoints = 0;
         public static GameCoordinator instance;
         public List<WeaponEntry> weapons;
         public Dictionary<string, GameObject> weaponObjects;
+        public NetworkCoordinator _netCoordinator;
         void Awake()
         {
             instance = this;
+        }
+
+        void Start()
+        {
         }
 
         // Update is called once per frame
         void Update()
         {
             
+        }
+
+        public void SetNetCoordinator(NetworkCoordinator netCoordinator)
+        {
+            _netCoordinator = netCoordinator;
         }
 
         void OnGUI() {
@@ -69,6 +82,25 @@ namespace Gunball
                 }
             }
             throw new System.Exception("Weapon " + name + " not found");
+        }
+
+        public void AssignRespawnRammer(GameObject player)
+        {
+            if (_netCoordinator == null)
+            {
+                int pointNum = assignedRespawnPoints % respawnPoints.Length;
+                Vector3 pos = respawnPoints[pointNum].Position;
+                Quaternion facing = respawnPoints[pointNum].Facing;
+
+                GameObject rammer = Instantiate(rammerPrefab, pos, facing);
+                rammer.GetComponent<RespawnRammer>().SetOwner(player);
+
+                assignedRespawnPoints++;
+            }
+            else
+            {
+                _netCoordinator.AssignRespawnPointServerRpc();
+            }
         }
     }
 }

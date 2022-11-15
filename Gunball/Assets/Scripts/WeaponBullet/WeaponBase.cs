@@ -53,7 +53,6 @@ namespace Gunball.WeaponSystem
 
             if (_netWeapon != null && _netWeapon.IsOwner)
             {
-                Debug.Log("WeaponBase.SetOwner: " + owner.name);
                 _netWeapon.SetOwner(owner);
             }
         }

@@ -32,13 +32,11 @@ namespace Gunball
             if (IsOwner)
             {
                 OwnerId = owner.GetComponent<NetworkObject>().NetworkObjectId;
-                Debug.Log("SetOwner: " + OwnerId);
             }
         }
 
         public void SyncOwner(ulong oldOwner, ulong newOwner)
         {
-            Debug.Log("SyncOwner: " + newOwner);
             _weapon.SetOwner(NetworkManager.SpawnManager.SpawnedObjects[newOwner].gameObject);
         }
 

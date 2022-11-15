@@ -112,6 +112,7 @@ namespace Gunball.MapObject
             _netPlayer = GetComponent<NetworkedPlayer>();
             CreateKitWeapons();
             if (_netPlayer != null && !_netPlayer.IsOwner) return;
+            GameCoordinator.instance.AssignRespawnRammer(this.gameObject);
             
             _startPos = transform.position - Vector3.up * 1.5f;
 
@@ -123,7 +124,7 @@ namespace Gunball.MapObject
             visualModel.SetActive(false);
             SetNoClip(true);
             _playController.velocity = Vector3.zero;
-            StartRespawnSequence();
+            Invoke("StartRespawnSequence", 0.25f);
         }
 
         void Update()
@@ -571,6 +572,11 @@ namespace Gunball.MapObject
             {
                 respawnRammer.StartRespawnSequence();
             }
+        }
+
+        public void SetRespawnRammer(RespawnRammer rammer)
+        {
+            respawnRammer = rammer;
         }
 
         public void FinishRespawnSequence(Vector3 startPos, Vector3 targetPos, float xAxis)

@@ -9,7 +9,10 @@ namespace Gunball.MapObject
         [SerializeField] bool IsForRammer = true;
         [SerializeField] ITeamObject.Teams Team;
 
-        Player _player;
+        public Vector3 Position {get => transform.position;}
+        public Quaternion Facing {get => transform.rotation;}
+
+    Player _player;
 
         public void AssignPlayer(Player player)
         {
