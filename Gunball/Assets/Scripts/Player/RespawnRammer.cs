@@ -35,6 +35,7 @@ namespace Gunball.MapObject
         void Start()
         {
             pov = aimingCam.GetCinemachineComponent<CinemachinePOV>();
+            _netRammer = GetComponent<NetworkedRespawnRammer>();
         }
 
         // Update is called once per frame
@@ -52,9 +53,7 @@ namespace Gunball.MapObject
                 {
                     _aiming = false;
                     owner.FinishRespawnSequence(respawnPosition.position, targetPosition, pov.m_HorizontalAxis.Value + transform.rotation.eulerAngles.y);
-                    anim.Play("RespawnFire");
-                    if (_netRammer != null && _netRammer.IsOwner)
-                        _netRammer.DoRammerFireServerRpc();
+                    PlayRammerFire();
                 }
             }
             else
@@ -74,7 +73,6 @@ namespace Gunball.MapObject
         {
             this.owner = owner.GetComponent<Player>();
             this.owner.SetRespawnRammer(this);
-            this.owner.SetTeam(_team);
             if (_netRammer != null && _netRammer.IsOwner)
             {
                 _netRammer.SetOwner(owner);
@@ -84,11 +82,11 @@ namespace Gunball.MapObject
         public void StartRespawnSequence()
         {
             visTransform.LookAt(noPoseTarget);
+            targetPosition = noPoseTarget.position;
             CinemachineSwitcher.SwitchTo(cutinCam);
-            anim.Play("RespawnPrepare");
             owner.transform.position = respawnPosition.position;
-            if (_netRammer != null && _netRammer.IsOwner)
-                _netRammer.DoRammerPrepareServerRpc();
+            PlayRammerPrepare();
+
             Invoke("StartAimingSequence", 0.5f);
         }
 
@@ -106,11 +104,21 @@ namespace Gunball.MapObject
         public void PlayRammerPrepare()
         {
             anim.Play("RespawnPrepare");
+            if (_netRammer != null)
+            {
+                if (_netRammer.IsOwner)
+                    _netRammer.DoRammerPrepareServerRpc();
+            }
         }
 
         public void PlayRammerFire()
         {
             anim.Play("RespawnFire");
+            if (_netRammer != null)
+            {
+                if (_netRammer.IsOwner)
+                    _netRammer.DoRammerFireServerRpc();
+            }
         }
 
         float DistanceFromPoint(Vector3 point1, Vector3 point2)
@@ -163,7 +171,10 @@ namespace Gunball.MapObject
 
         public void SetTeam(ITeamObject.Teams team)
         {
+            Debug.Log("Setting rammer team to " + team);
             _team = team;
+            if (owner != null)
+                owner.SetTeam(team);
         }
     }
 }

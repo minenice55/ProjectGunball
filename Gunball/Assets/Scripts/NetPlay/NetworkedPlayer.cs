@@ -49,6 +49,8 @@ namespace Gunball
                 Destroy(playerCineTarget);
                 _player.IsPlayer = false;
 
+                _player.SetTeam(PlayerState.PlayerTeam);
+
                 _netState.OnValueChanged += SyncPlayerState;
             }
         }
@@ -68,6 +70,7 @@ namespace Gunball
                     RespawnStartPos = _player.RespawnStart,
                     RespawnEndPos = _player.RespawnEnd,
                     RespawnTime = _player.RespawnTime,
+                    PlayerTeam = _player.ObjectTeam
                 };
             }
             else
@@ -119,6 +122,11 @@ namespace Gunball
             {
                 transform.position = respawnStart;
                 _player.VisualModel.transform.LookAt(respawnEnd);
+            }
+
+            if (lastState.PlayerTeam != newState.PlayerTeam)
+            {
+                _player.SetTeam(newState.PlayerTeam);
             }
         }
 
@@ -231,6 +239,8 @@ namespace Gunball
             Vector3 respawnEnd;
             short respawnTime;
 
+            byte playerTeam;
+
             public Vector3 Position { get => position; set => position = value; }
             public Vector3 Velocity { get => velocity; set => velocity = value; }
             public Vector3 AimingAngle { 
@@ -251,6 +261,8 @@ namespace Gunball
             public Vector3 RespawnEndPos { get => respawnEnd; set => respawnEnd = value; }
             public float RespawnTime { get => respawnTime; set => respawnTime = (short)value; }
 
+            public ITeamObject.Teams PlayerTeam { get => (ITeamObject.Teams)playerTeam; set => playerTeam = (byte)value; }
+
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
                 serializer.SerializeValue(ref position);
@@ -265,6 +277,8 @@ namespace Gunball
                 serializer.SerializeValue(ref respawnStart);
                 serializer.SerializeValue(ref respawnEnd);
                 serializer.SerializeValue(ref respawnTime);
+
+                serializer.SerializeValue(ref playerTeam);
             }
         }
     }

@@ -14,6 +14,7 @@ namespace Gunball
 
         ulong _ownerId;
         Vector3 _aimingAt;
+        ITeamObject.Teams _team;
 
         NetworkVariable<NetworkedRammerState> _netState = new NetworkVariable<NetworkedRammerState>(readPerm: NetworkVariableReadPermission.Everyone, writePerm: NetworkVariableWritePermission.Owner);
         NetworkedRammerState RammerState { get => _netState.Value; set => _netState.Value = value; }
@@ -42,6 +43,7 @@ namespace Gunball
                     if (newOwner != null)
                     {
                         _rammer.SetOwner(newOwner);
+                        _rammer.SetTeam(_team);
                     }
                 }
             }
@@ -56,6 +58,7 @@ namespace Gunball
                 {
                     AimingAt = _rammer.AimingAt,
                     OwnerId = _ownerId,
+                    Team = _rammer.ObjectTeam
                 };
             }
             else
@@ -68,6 +71,7 @@ namespace Gunball
         {
             _aimingAt = newState.AimingAt;
             _ownerId = newState.OwnerId;
+            _team = newState.Team;
             if (newState.OwnerId != oldState.OwnerId)
             {
                 if (NetworkManager.SpawnManager.SpawnedObjects.ContainsKey(newState.OwnerId))
@@ -76,6 +80,7 @@ namespace Gunball
                     if (newOwner != null)
                     {
                         _rammer.SetOwner(newOwner);
+                        _rammer.SetTeam(_team);
                     }
                 }
             }
@@ -115,18 +120,34 @@ namespace Gunball
                 _rammer.PlayRammerFire();
         }
 
+        [ServerRpc(RequireOwnership = false)]
+        public void SetTeamServerRpc(int team, ServerRpcParams serverRpcParams = default)
+        {
+            if (IsServer)
+                SetTeamClientRpc(team);
+        }
+
+        [ClientRpc]
+        public void SetTeamClientRpc(int team)
+        {
+            _rammer.SetTeam((ITeamObject.Teams)team);
+        }
+
         public struct NetworkedRammerState : INetworkSerializable
         {
             Vector3 aimingAt;
             ulong ownerId;
+            byte team;
 
             public Vector3 AimingAt { get => aimingAt; set => aimingAt = value; }
             public ulong OwnerId { get => ownerId; set => ownerId = value; }
+            public ITeamObject.Teams Team { get => (ITeamObject.Teams)team; set => team = (byte)value; }
 
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
                 serializer.SerializeValue(ref aimingAt);
                 serializer.SerializeValue(ref ownerId);
+                serializer.SerializeValue(ref team);
             }
         }
     }

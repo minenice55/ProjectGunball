@@ -6,7 +6,7 @@ namespace Gunball.MapObject
 {
     public class RespawnPoint : MonoBehaviour, ITeamObject
     {
-        [SerializeField] bool IsForRammer = true;
+        [SerializeField] public bool IsForRammer = true;
         [SerializeField] ITeamObject.Teams Team;
 
         public Vector3 Position {get => transform.position;}

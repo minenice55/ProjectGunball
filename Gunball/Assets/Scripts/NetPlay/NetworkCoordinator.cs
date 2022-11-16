@@ -26,12 +26,18 @@ namespace Gunball
             if (NetworkManager.ConnectedClients.ContainsKey(clientId))
             {
                 int pointNum = _gameCoordinator.assignedRespawnPoints % _gameCoordinator.respawnPoints.Length;
-                Vector3 pos = _gameCoordinator.respawnPoints[pointNum].Position;
-                Quaternion facing = _gameCoordinator.respawnPoints[pointNum].Facing;
+                RespawnPoint point = _gameCoordinator.respawnPoints[pointNum];
+                if (pointNum % 2 == 0)
+                    point = _gameCoordinator.GetRespawnPointForTeam(ITeamObject.Teams.Alpha, _gameCoordinator.assignedRespawnPoints);
+                else
+                    point = _gameCoordinator.GetRespawnPointForTeam(ITeamObject.Teams.Bravo, _gameCoordinator.assignedRespawnPoints);
+
+                Vector3 pos = point.Position;
+                Quaternion facing = point.Facing;
 
                 GameObject rammer = Instantiate(_gameCoordinator.rammerPrefab, pos, facing);
-                rammer.GetComponent<RespawnRammer>().SetTeam(_gameCoordinator.respawnPoints[pointNum].ObjectTeam);
                 rammer.GetComponent<NetworkObject>().SpawnWithOwnership(clientId);
+                rammer.GetComponent<NetworkedRespawnRammer>().SetTeamServerRpc((int)point.ObjectTeam);
 
                 _gameCoordinator.assignedRespawnPoints++;
             }

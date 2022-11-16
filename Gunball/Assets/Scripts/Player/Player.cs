@@ -36,10 +36,13 @@ namespace Gunball.MapObject
         [SerializeField] GameObject visualModel;
         [SerializeField] PlayerParameters playPrm;
         [SerializeField] LayerMask gndCollisionFlags;
-        [SerializeField] GuideManager guideMgr;
+        [SerializeField] GuideManager guideMgrUi;
+        [SerializeField] UIStatusManager statusMgrUi;
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
         [SerializeField] RespawnRammer respawnRammer;
+
+        [SerializeField] float respawnDeadDuration = 1f;
         #endregion
 
         #region Public Variables
@@ -77,6 +80,7 @@ namespace Gunball.MapObject
 
         Vector3 _startPos;
         float respawnRamTime = 0f;
+        float _respawnDeadTime = 0f;
         Vector3 respawnStart, respawnEnd;
 
         Dictionary<string, GameObject> kitWeapons;
@@ -122,15 +126,18 @@ namespace Gunball.MapObject
             
             _startPos = transform.position - Vector3.up * 1.5f;
 
-            guideMgr.SetCamera(playerCamera);
+            guideMgrUi.SetCamera(playerCamera);
             Cursor.lockState = CursorLockMode.Locked;
+
+            //todo: wait until rammer is assigned
 
             _hp = 0;
             ChangeWeapon(null);
             visualModel.SetActive(false);
             SetNoClip(true);
             _playController.velocity = Vector3.zero;
-            Invoke("StartRespawnSequence", 0.25f);
+            _respawnDeadTime = respawnDeadDuration + 0.75f;
+            Invoke("StartRespawnSequence", respawnDeadDuration);
         }
 
         void Update()
@@ -153,7 +160,17 @@ namespace Gunball.MapObject
                     DoPlayerMovement();
                     DoWeaponLogic();
                 }
-                guideMgr.SetIsRespawnGuide(respawnRammer.Aiming, respawnRammer.AimingAt, ObjectTeam);
+                if (respawnRammer != null)
+                    guideMgrUi.SetIsRespawnGuide(respawnRammer.Aiming, respawnRammer.AimingAt, ObjectTeam);
+                if (IsDead)
+                {
+                    statusMgrUi.SetRespawning(_respawnDeadTime, respawnDeadDuration + 0.75f, 
+                        (respawnRammer != null) ? respawnRammer.Aiming : false, false);
+                }
+                else
+                {
+                    statusMgrUi.SetHealth(Health, MaxHealth);
+                }
             }
         }
 
@@ -226,8 +243,8 @@ namespace Gunball.MapObject
             }
             newWeapon.SetOwner(gameObject);
             Weapon = newWeapon;
-            guideMgr.SetWeapon(Weapon);
-            guideMgr.UpdateGuide();
+            guideMgrUi.SetWeapon(Weapon);
+            guideMgrUi.UpdateGuide();
         }
 
         void SetNullWeapon()
@@ -237,8 +254,8 @@ namespace Gunball.MapObject
                 if (_netPlayer != null) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
             }
             Weapon = null;
-            guideMgr.SetWeapon(Weapon);
-            guideMgr.UpdateGuide();
+            guideMgrUi.SetWeapon(Weapon);
+            guideMgrUi.UpdateGuide();
         }
 
         public void ResetWeapon()
@@ -341,6 +358,9 @@ namespace Gunball.MapObject
             
             ignoreMoveTimer -= _dt;
             if (ignoreMoveTimer < 0f) ignoreMoveTimer = 0f;
+
+            _respawnDeadTime -= _dt;
+            if (_respawnDeadTime < 0f) _respawnDeadTime = 0f;
         }
 
         void PollInput()
@@ -415,7 +435,7 @@ namespace Gunball.MapObject
             if (Weapon != null) 
                 Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
 
-            guideMgr.UpdateGuide();
+            guideMgrUi.UpdateGuide();
 
             if (Weapon != null && Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
             {
@@ -593,6 +613,7 @@ namespace Gunball.MapObject
             transform.position = startPos;
             visualModel.transform.LookAt(targetPos);
             playerCineCamera.m_XAxis.Value = xAxis;
+            playerCineCamera.m_YAxis.Value = 0.5f;
             respawnRamTime = 0.66f;
             respawnStart = startPos;
             respawnEnd = targetPos + Vector3.up * 1f;
@@ -635,7 +656,6 @@ namespace Gunball.MapObject
             if (IsDead) return;
             if (respawnRamTime > 0f) return;
             // log damage
-            Debug.Log("Took " + damage + " damage. Health remaining: " + (Health - damage));
             Health -= damage;
             if (IsDead)
             {
@@ -651,7 +671,6 @@ namespace Gunball.MapObject
             if (IsDead) return;
             if (respawnRamTime > 0f) return;
             // log recovery
-            Debug.Log("Recovered " + healing + " damage");
             Health += healing;
         }
 
@@ -666,7 +685,8 @@ namespace Gunball.MapObject
             visualModel.SetActive(false);
             SetNoClip(true);
             _playController.velocity = Vector3.zero;
-            Invoke("StartRespawnSequence", 1f);
+            _respawnDeadTime = respawnDeadDuration + 0.75f;
+            Invoke("StartRespawnSequence", respawnDeadDuration);
             return;
         }
 
@@ -716,6 +736,8 @@ namespace Gunball.MapObject
         public void SetTeam(ITeamObject.Teams team)
         {
             _team = team;
+            if (_netPlayer != null && _netPlayer.IsOwner)
+                statusMgrUi.SetTeam(team);
         }
         #endregion
 

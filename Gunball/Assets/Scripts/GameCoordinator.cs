@@ -85,17 +85,42 @@ namespace Gunball
             throw new System.Exception("Weapon " + name + " not found");
         }
 
+        public RespawnPoint GetRespawnPointForTeam(ITeamObject.Teams team, int lastAssigned)
+        {
+            int i = 0;
+            foreach (RespawnPoint point in respawnPoints)
+            {
+                if (i < lastAssigned)
+                {
+                    i++;
+                    continue;
+                }
+                if (!point.IsForRammer) continue;
+                if (point.ObjectTeam == team)
+                {
+                    return point;
+                }
+            }
+            return null;
+        }
+
         public void AssignRespawnRammer(GameObject player)
         {
             if (_netCoordinator == null)
             {
                 int pointNum = assignedRespawnPoints % respawnPoints.Length;
-                Vector3 pos = respawnPoints[pointNum].Position;
-                Quaternion facing = respawnPoints[pointNum].Facing;
+                RespawnPoint point = respawnPoints[pointNum];
+                if (pointNum % 2 == 0)
+                    point = GetRespawnPointForTeam(ITeamObject.Teams.Alpha, assignedRespawnPoints);
+                else
+                    point = GetRespawnPointForTeam(ITeamObject.Teams.Bravo, assignedRespawnPoints);
+
+                Vector3 pos = point.Position;
+                Quaternion facing = point.Facing;
 
                 GameObject rammer = Instantiate(rammerPrefab, pos, facing);
                 rammer.GetComponent<RespawnRammer>().SetOwner(player);
-                rammer.GetComponent<RespawnRammer>().SetTeam(respawnPoints[pointNum].ObjectTeam);
+                rammer.GetComponent<RespawnRammer>().SetTeam(point.ObjectTeam);
 
                 assignedRespawnPoints++;
             }
