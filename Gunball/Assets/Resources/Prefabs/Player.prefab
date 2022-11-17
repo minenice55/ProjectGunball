@@ -1872,6 +1872,7 @@ GameObject:
   - component: {fileID: 2870239283765865174}
   - component: {fileID: 4771660439333424663}
   - component: {fileID: 9118505695884686268}
+  - component: {fileID: 4810590119895832628}
   m_Layer: 0
   m_Name: PlayerUI
   m_TagString: Untagged
@@ -2032,6 +2033,25 @@ MonoBehaviour:
   healthBar: {fileID: 7986744566954799766}
   healthText: {fileID: 2999008557161815415}
   respawnText: {fileID: 3170257295469256419}
+--- !u!95 &4810590119895832628
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5073546830531208829}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: cc807b9d42ef1a045a947feef8716823, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!1 &5513682982845059750
 GameObject:
   m_ObjectHideFlags: 0
@@ -2192,7 +2212,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6316839412420986418}
-  m_LocalRotation: {x: 0.48255688, y: 0.14899732, z: -0.083698645, w: 0.85903037}
+  m_LocalRotation: {x: 0.4825569, y: 0.1489973, z: -0.08369864, w: 0.85903037}
   m_LocalPosition: {x: -0.7463087, y: 5.885439, z: -2.086665}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -2589,7 +2609,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8122331631708433126}
-  m_LocalRotation: {x: 0.4416676, y: 0.15276486, z: -0.07660645, w: 0.880752}
+  m_LocalRotation: {x: 0.4416676, y: 0.15276483, z: -0.07660642, w: 0.880752}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -2674,10 +2694,10 @@ RectTransform:
   m_Father: {fileID: 2264275875078957890}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1280, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8199104108918673339
 CanvasRenderer:

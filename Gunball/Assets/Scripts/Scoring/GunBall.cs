@@ -28,7 +28,7 @@ namespace Gunball.MapObject
         public Transform Transform { get => transform; }
         public IShootableObject.ShootableType Type { get { return _owner == null ? IShootableObject.ShootableType.VsBall : IShootableObject.ShootableType.None; } }
 
-        public Vector3 Velocity { get => _rigidbody.velocity; }
+        public Vector3 Velocity { get => _rigidbody.velocity; set => _rigidbody.velocity = value; }
         public float LastThrowTime {set => lastThrowTime = value; }
         public Player Owner { get => _owner; }
 
@@ -134,7 +134,6 @@ namespace Gunball.MapObject
 
         public void CallBallThrow(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
         {
-            Debug.Log("CallBallThrow");
             if (_networkedGunball != null)
             {
                 _networkedGunball.RequestThrowServerRpc(rootPos, spawnPos, facing);
@@ -149,7 +148,7 @@ namespace Gunball.MapObject
 
         public void DoBallThrow(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
         {
-            Debug.Log("DoBallThrow");
+            if (_owner == null || _owner.Weapon == null) return;
             WeaponVsBall wp = (WeaponVsBall)_owner.Weapon;
             transform.position = spawnPos;
             transform.localScale = origScale;
@@ -157,7 +156,6 @@ namespace Gunball.MapObject
 
             lastThrowTime = Time.time;
 
-            Debug.Log(wp.GetSpawnSpeed());
             _rigidbody.velocity = facing * wp.GetSpawnSpeed() + _owner.Velocity;
             _owner.ResetWeapon();
             ResetOwner();
@@ -197,7 +195,7 @@ namespace Gunball.MapObject
             lastThrowTime = Time.time;
 
             _rigidbody.velocity = Vector3.up * 8f;
-            _owner.ResetWeapon();
+            if (_owner != null) _owner.ResetWeapon();
             ResetOwner();
         }
 

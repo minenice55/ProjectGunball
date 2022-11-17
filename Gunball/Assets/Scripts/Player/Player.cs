@@ -511,8 +511,6 @@ namespace Gunball.MapObject
 
         void DoMove(float speed, float accel)
         {
-            // if (_netPlayer.IsOwner)
-            //     Debug.Log("DoMove: " + _input + " kine: " + _playController.isKinematic);
             Vector3 vel = new Vector3(Velocity.x, 0, Velocity.z);
             Vector3 moveDir = playerCamera.transform.TransformDirection(_input);
             moveDir.y = 0f;

@@ -46,6 +46,12 @@ namespace Gunball
         {
             if (IsServer)
             {
+                if (!NetworkManager.ConnectedClients.ContainsKey(_owner))
+                {
+                    _isHeld = false;
+                    _gunball.DeathDrop();
+                    DeathDropClientRpc(_owner);
+                }
                 BallState = new NetworkedGunballState
                 {
                     Position = transform.position,
@@ -77,6 +83,7 @@ namespace Gunball
 
         void SyncBallState(NetworkedGunballState oldState, NetworkedGunballState newState)
         {
+            _gunball.Velocity = newState.Velocity;
             lerpVel = newState.Velocity;
             lerpTarget = newState.Position;
             transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
@@ -156,7 +163,12 @@ namespace Gunball
         public void DeathDropClientRpc(ulong clientId)
         {
             if (!IsServer)
-                _gunball.DeathDrop();
+            {
+                if (clientId == NetworkManager.LocalClientId)
+                {
+                    _gunball.DeathDrop();
+                }
+            }
         }
 
         public struct NetworkedGunballState : INetworkSerializable

@@ -31,6 +31,8 @@ namespace Gunball.MapObject
         public bool Aiming { get => _aiming; }
         public ITeamObject.Teams ObjectTeam { get => _team; }
 
+        public bool IsFirstSpawn;
+
         // Start is called before the first frame update
         void Start()
         {
@@ -49,7 +51,7 @@ namespace Gunball.MapObject
                 FindLaunchPosition(visTransform.position, owner.CameraDirection, 8);
                 visTransform.LookAt(targetPosition);
                 Debug.DrawLine(visTransform.position, targetPosition, Color.green);
-                if (Input.GetButtonDown("Attack"))
+                if (!IsFirstSpawn && Input.GetButtonDown("Attack"))
                 {
                     _aiming = false;
                     owner.FinishRespawnSequence(respawnPosition.position, targetPosition, pov.m_HorizontalAxis.Value + transform.rotation.eulerAngles.y);
@@ -113,6 +115,7 @@ namespace Gunball.MapObject
 
         public void PlayRammerFire()
         {
+            IsFirstSpawn = false;
             anim.Play("RespawnFire");
             if (_netRammer != null)
             {
