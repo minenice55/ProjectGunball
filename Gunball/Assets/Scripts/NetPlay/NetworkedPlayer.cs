@@ -66,6 +66,7 @@ namespace Gunball
                     Velocity = _player.Velocity,
                     AimingAngle = _player.AimingAngle,
                     LastGroundRotation = _player.VisualModel.transform.rotation.eulerAngles.y,
+                    InAction = _player.InAction,
                     Health = _player.Health,
                     RespawnStartPos = _player.RespawnStart,
                     RespawnEndPos = _player.RespawnEnd,
@@ -104,6 +105,7 @@ namespace Gunball
             lerpTarget = newState.Position;
             transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
             lastGroundRotation = newState.LastGroundRotation;
+            _player.InAction = newState.InAction;
             _player.Health = newState.Health;
             respawnStart = newState.RespawnStartPos;
             respawnEnd = newState.RespawnEndPos;
@@ -159,7 +161,17 @@ namespace Gunball
         {
             IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
             if (target != null && !target.IsDead)
-                InflictDamageClientRpc(damage, targetNetId, sourceNetId);
+            {
+                if (NetworkManager.SpawnManager.SpawnedObjects[targetNetId].IsOwnedByServer && !IsOwnedByServer)
+                {
+                    IDamageSource source = NetworkManager.SpawnManager.SpawnedObjects[sourceNetId].GetComponent<IDamageSource>();
+                    target.DoDamage(damage, source);
+                }
+                else
+                {
+                    InflictDamageClientRpc(damage, targetNetId, sourceNetId);
+                }
+            }
         }
         [ClientRpc]
         public void InflictDamageClientRpc(float damage, ulong targetNetId, ulong sourceNetId)
@@ -182,7 +194,19 @@ namespace Gunball
         [ServerRpc]
         public void InflictKnockbackServerRpc(Vector3 force, Vector3 pos, float knockbackTimer, ulong targetNetId, ulong sourceNetId)
         {
-            InflictKnockbackClientRpc(force, pos, knockbackTimer, targetNetId, sourceNetId);
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target != null)
+            {
+                if (NetworkManager.SpawnManager.SpawnedObjects[targetNetId].IsOwnedByServer && !IsOwnedByServer)
+                {
+                    target.SetKnockbackTimer(knockbackTimer);
+                    target.Knockback(force, pos);
+                }
+                else
+                {
+                    InflictKnockbackClientRpc(force, pos, knockbackTimer, targetNetId, sourceNetId);
+                }
+            }
         }
         [ClientRpc]
         public void InflictKnockbackClientRpc(Vector3 force, Vector3 pos, float knockbackTimer, ulong targetNetId, ulong sourceNetId)
@@ -191,7 +215,7 @@ namespace Gunball
             IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
             if (target == null)
             {
-                Debug.LogError("Player NetInflictKnockback Client RPC: Target or null!");
+                Debug.LogError("Player NetInflictKnockback Client RPC: Target is null!");
                 return;
             }
             target.SetKnockbackTimer(knockbackTimer);
@@ -207,7 +231,17 @@ namespace Gunball
         {
             IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
             if (target != null && !target.IsDead)
-                InflictHealingClientRpc(healing, targetNetId, sourceNetId);
+            {
+                if (NetworkManager.SpawnManager.SpawnedObjects[targetNetId].IsOwnedByServer && !IsOwnedByServer)
+                {
+                    IDamageSource source = NetworkManager.SpawnManager.SpawnedObjects[sourceNetId].GetComponent<IDamageSource>();
+                    target.RecoverDamage(healing, source);
+                }
+                else
+                {
+                    InflictHealingClientRpc(healing, targetNetId, sourceNetId);
+                }
+            }
         }
         [ClientRpc]
         public void InflictHealingClientRpc(float healing, ulong targetNetId, ulong sourceNetId)
@@ -232,6 +266,7 @@ namespace Gunball
             short aimingHorizontal;
             short aimingVertical;
             short groundRotationOrAirBasis;
+            bool inAction;
 
             float health;
 
@@ -254,6 +289,7 @@ namespace Gunball
             }
 
             public float LastGroundRotation { get => groundRotationOrAirBasis; set => groundRotationOrAirBasis = (short)value; }
+            public bool InAction { get => inAction; set => inAction = value; }
 
             public float Health { get => health; set => health = value; }
 
@@ -271,6 +307,7 @@ namespace Gunball
                 serializer.SerializeValue(ref aimingHorizontal);
                 serializer.SerializeValue(ref aimingVertical);
                 serializer.SerializeValue(ref groundRotationOrAirBasis);
+                serializer.SerializeValue(ref inAction);
 
                 serializer.SerializeValue(ref health);
 

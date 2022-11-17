@@ -63,6 +63,7 @@ namespace Gunball.MapObject
         #region Private Variables
         float _hp;
         bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
+        bool _inAction;
         float _dt;
         float _firingTime;
         float _fireRelaxTime = Single.MaxValue;
@@ -97,7 +98,12 @@ namespace Gunball.MapObject
         public Transform BallPickupPos { get => vsBallPos; }
         public Transform BallSpawnPos { get => vsWpnBallPos; }
         public FiringType CurrentFireKeys { get => _fireKeys; }
-        public bool InAction { get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0; }
+        public bool InAction { get => Weapon != null ? Weapon.GetPlayerInAction() : false 
+            || InFireCoroutine 
+            || (int)CurrentFireKeys != 0
+            || _inAction; 
+            set => _inAction = value; 
+        }
         public GameObject VisualModel { get => visualModel; }
         public Vector3 AimingAngle { get => new Vector3(playerCamera.transform.rotation.eulerAngles.x, playerCamera.transform.rotation.eulerAngles.y, 0); set => _aimingInput = value; }
         public float SpeedStat { get => IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed; }
@@ -240,6 +246,8 @@ namespace Gunball.MapObject
             if (_netPlayer != null && _netPlayer.IsOwner)
             {
                 WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
+                if (Weapon != null && Weapon.gameObject != null && Weapon.IsGlobalWeapon)
+                    Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
             }
             newWeapon.SetOwner(gameObject);
             Weapon = newWeapon;
@@ -251,7 +259,7 @@ namespace Gunball.MapObject
         {
             if (Weapon != null && Weapon.gameObject != null && Weapon.IsGlobalWeapon)
             {
-                if (_netPlayer != null) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
+                if (_netPlayer != null && _netPlayer.IsOwner) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
             }
             Weapon = null;
             guideMgrUi.SetWeapon(Weapon);
@@ -679,7 +687,7 @@ namespace Gunball.MapObject
             Health = 0;
             if (VsBall != null)
             {
-                VsBall.DeathDrop();
+                VsBall.CallDeathDrop();
             }
             ChangeWeapon(null);
             visualModel.SetActive(false);
@@ -692,9 +700,10 @@ namespace Gunball.MapObject
 
         public void InflictKnockback(Vector3 force, Vector3 pos, float knockbackTimer, IShootableObject target)
         {
-            if ((ITeamObject) target != null)
+            ITeamObject teamObject = target as ITeamObject;
+            if (teamObject != null)
             {
-                if (ObjectTeam == ((ITeamObject) target).ObjectTeam && target != (IShootableObject) this) return;
+                if (ObjectTeam == teamObject.ObjectTeam && target != (IShootableObject) this) return;
             }
             if (_netPlayer != null)
             {
@@ -707,9 +716,10 @@ namespace Gunball.MapObject
 
         public void InflictDamage(float damage, IShootableObject target, bool doCharge = true)
         {
-            if ((ITeamObject) target != null)
+            ITeamObject teamObject = target as ITeamObject;
+            if (teamObject != null)
             {
-                if (ObjectTeam == ((ITeamObject) target).ObjectTeam && target != (IShootableObject) this) return;
+                if (ObjectTeam == teamObject.ObjectTeam && target != (IShootableObject) this) return;
             }
             if (_netPlayer != null)
             {
