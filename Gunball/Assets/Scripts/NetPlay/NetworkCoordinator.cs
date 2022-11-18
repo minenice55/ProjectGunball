@@ -9,7 +9,8 @@ using Cinemachine;
 namespace Gunball
 {
     public class NetworkCoordinator : NetworkBehaviour
-    {GameCoordinator _gameCoordinator;
+    {
+        GameCoordinator _gameCoordinator;
 
         void Start() {
         }
@@ -41,6 +42,27 @@ namespace Gunball
 
                 _gameCoordinator.assignedRespawnPoints++;
             }
+        }
+
+        [ServerRpc]
+        public void StartGameServerRpc()
+        {
+            StartGameClientRpc(NetworkManager.ServerTime.Time);
+            _gameCoordinator.ballSpawn.GetComponent<GunBall>().DoDeath();
+        }
+
+        [ClientRpc]
+        public void StartGameClientRpc(double time)
+        {
+            double timeToWait = time - NetworkManager.ServerTime.Time;
+            Player player = NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<Player>();
+            player.StartGame((float) timeToWait + Time.time + 5f);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void ConfirmJoinedServerRpc(ServerRpcParams serverRpcParams = default)
+        {
+            _gameCoordinator.ConfirmJoined();
         }
     }
 }

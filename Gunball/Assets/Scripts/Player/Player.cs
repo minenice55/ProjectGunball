@@ -41,6 +41,7 @@ namespace Gunball.MapObject
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
         [SerializeField] RespawnRammer respawnRammer;
+        [SerializeField] Animator uiAnimator;
 
         [SerializeField] float respawnDeadDuration = 1f;
         #endregion
@@ -64,6 +65,7 @@ namespace Gunball.MapObject
         float _hp;
         bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
         bool _inAction;
+        bool _isFirstSpawn;
         float _dt;
         float _firingTime;
         float _fireRelaxTime = Single.MaxValue;
@@ -135,15 +137,21 @@ namespace Gunball.MapObject
             guideMgrUi.SetCamera(playerCamera);
             Cursor.lockState = CursorLockMode.Locked;
 
-            //todo: wait until rammer is assigned
-
             _hp = 0;
             ChangeWeapon(null);
             visualModel.SetActive(false);
             SetNoClip(true);
             _playController.velocity = Vector3.zero;
-            _respawnDeadTime = respawnDeadDuration + 0.75f;
-            Invoke("StartRespawnSequence", respawnDeadDuration);
+
+            CinemachineSwitcher.SwitchTo(GameCoordinator.instance.vsWaitingCam);
+            _isFirstSpawn = true;
+            uiAnimator.Play("StartInitialPose");
+            Invoke("ConfirmJoin", 0.5f);
+        }
+
+        void ConfirmJoin()
+        {
+            GameCoordinator.instance.PlayerJoinConfirm();
         }
 
         void Update()
@@ -171,13 +179,22 @@ namespace Gunball.MapObject
                 if (IsDead)
                 {
                     statusMgrUi.SetRespawning(_respawnDeadTime, respawnDeadDuration + 0.75f, 
-                        (respawnRammer != null) ? respawnRammer.Aiming : false, false);
+                        (respawnRammer != null) ? respawnRammer.Aiming : false, _isFirstSpawn);
                 }
                 else
                 {
                     statusMgrUi.SetHealth(Health, MaxHealth);
                 }
             }
+        }
+
+        public void StartGame(float startTime)
+        {
+            _respawnDeadTime = startTime - Time.time;
+            FadeManager.Fade(Time.time, Time.time + 0.25f, startTime - 3f, startTime - 4f);
+            Invoke("StartRespawnIntro", startTime - Time.time - 3.5f);
+            Invoke("ReadyGo", startTime - Time.time - 1.5f);
+            Invoke("FinishRespawnIntro", startTime - Time.time);
         }
 
         public void CreateKitWeapons()
@@ -607,6 +624,23 @@ namespace Gunball.MapObject
             }
         }
 
+        void StartRespawnIntro()
+        {
+            respawnRammer.StartIntroSequence();
+        }
+
+        void FinishRespawnIntro()
+        {
+            _isFirstSpawn = false;
+            respawnRammer.DoRammerAutoFire();
+            uiAnimator.Play("VsIntro");
+        }
+
+        void ReadyGo()
+        {
+            uiAnimator.Play("ReadyGo");
+        }
+
         public void SetRespawnRammer(RespawnRammer rammer)
         {
             respawnRammer = rammer;
@@ -614,6 +648,7 @@ namespace Gunball.MapObject
 
         public void FinishRespawnSequence(Vector3 startPos, Vector3 targetPos, float xAxis)
         {
+            _isFirstSpawn = false;
             Health = playPrm.Max_Health;
             visualModel.SetActive(true);
             transform.position = startPos;

@@ -569,6 +569,8 @@ MonoBehaviour:
   respawnPosition: {fileID: 8866657078331422173}
   cutinCam: {fileID: 8299792834162164450}
   aimingCam: {fileID: 2843555989136616335}
+  vsIntroCam: {fileID: 7352668669498755980}
+  introCamAnim: {fileID: 6984510605756833946}
   IsFirstSpawn: 0
 --- !u!114 &-1344710551723729713
 MonoBehaviour:

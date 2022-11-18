@@ -16,6 +16,8 @@ namespace Gunball.MapObject
 
         [SerializeField] CinemachineVirtualCamera cutinCam;
         [SerializeField] CinemachineVirtualCamera aimingCam;
+        [SerializeField] CinemachineVirtualCamera vsIntroCam;
+        [SerializeField] Animator introCamAnim;
 
         CinemachinePOV pov;
 
@@ -81,6 +83,17 @@ namespace Gunball.MapObject
             }
         }
 
+        public void StartIntroSequence()
+        {
+            visTransform.LookAt(noPoseTarget);
+            targetPosition = noPoseTarget.position;
+            CinemachineSwitcher.SwitchTo(vsIntroCam);
+            introCamAnim.Play("VsIntro");
+            owner.transform.position = respawnPosition.position;
+
+            Invoke("StartRespawnSequence", 1.75f);
+        }
+
         public void StartRespawnSequence()
         {
             visTransform.LookAt(noPoseTarget);
@@ -103,6 +116,16 @@ namespace Gunball.MapObject
             _aiming = true;
         }
 
+        public void DoRammerAutoFire()
+        {
+            IsFirstSpawn = false;
+            _aiming = false;
+            if (owner == null) return;
+            if (_netRammer != null && !_netRammer.IsOwner) return;
+            owner.FinishRespawnSequence(respawnPosition.position, targetPosition, pov.m_HorizontalAxis.Value + transform.rotation.eulerAngles.y);
+            PlayRammerFire();
+        }
+
         public void PlayRammerPrepare()
         {
             anim.Play("RespawnPrepare");
@@ -115,7 +138,6 @@ namespace Gunball.MapObject
 
         public void PlayRammerFire()
         {
-            IsFirstSpawn = false;
             anim.Play("RespawnFire");
             if (_netRammer != null)
             {

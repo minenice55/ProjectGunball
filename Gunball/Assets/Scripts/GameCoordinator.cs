@@ -4,20 +4,27 @@ using UnityEngine;
 using Unity.Netcode;
 using Gunball.WeaponSystem;
 using Gunball.MapObject;
+using Cinemachine;
 
 namespace Gunball
 {
     using static WeaponDictionary;
     public class GameCoordinator : MonoBehaviour
     {
+        [SerializeField] int maxPlayers = 2;
+        [SerializeField] public CinemachineVirtualCamera vsWaitingCam;
+        [SerializeField] GameObject waitingCamRoot;
         [SerializeField] public RespawnPoint[] respawnPoints;
         [SerializeField] public GameObject rammerPrefab;
+        [SerializeField] public GameObject ballSpawn;
         [SerializeField] public Color[] teamColours;
         public int assignedRespawnPoints = 0;
         public static GameCoordinator instance;
         public List<WeaponEntry> weapons;
         public Dictionary<string, GameObject> weaponObjects;
         public NetworkCoordinator _netCoordinator;
+        public bool gameStarted = false;
+        int joinedPlayers;
         void Awake()
         {
             instance = this;
@@ -25,17 +32,56 @@ namespace Gunball
 
         void Start()
         {
+            NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
         }
 
         // Update is called once per frame
         void Update()
         {
-            
+            if (waitingCamRoot != null)
+            {
+                waitingCamRoot.transform.Rotate(Vector3.up, 22.5f * Time.deltaTime);
+            }
         }
 
         public void SetNetCoordinator(NetworkCoordinator netCoordinator)
         {
             _netCoordinator = netCoordinator;
+        }
+
+        private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+        {
+            if (gameStarted) response.Approved = false;
+            if (NetworkManager.Singleton.ConnectedClients.Count >= maxPlayers)
+            {
+                response.Approved = false;
+            }
+            else
+            {
+                response.Approved = true;
+                response.CreatePlayerObject = true;
+            }
+        }
+
+        public void PlayerJoinConfirm()
+        {
+            if (_netCoordinator == null)
+            {
+                ConfirmJoined();
+            }
+            else
+            {
+                _netCoordinator.ConfirmJoinedServerRpc();
+            }
+        }
+
+        public void ConfirmJoined()
+        {
+            joinedPlayers++;
+            if (joinedPlayers >= maxPlayers && !gameStarted)
+            {
+                StartGame();
+            }
         }
 
         void OnGUI() {
@@ -125,6 +171,23 @@ namespace Gunball
             else
             {
                 _netCoordinator.AssignRespawnPointServerRpc();
+            }
+        }
+
+        public void StartGame()
+        {
+            gameStarted = true;
+            if (_netCoordinator == null)
+            {
+                ballSpawn.GetComponent<GunBall>().DoDeath();
+                foreach (Player player in FindObjectsOfType<Player>())
+                {
+                    player.StartGame(Time.time + 5f);
+                }
+            }
+            else
+            {
+                _netCoordinator.StartGameServerRpc();
             }
         }
 

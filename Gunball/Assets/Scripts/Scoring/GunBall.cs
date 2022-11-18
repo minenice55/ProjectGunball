@@ -46,8 +46,8 @@ namespace Gunball.MapObject
         void Start()
         {
             origScale = transform.localScale;
-            GameCoordinator.instance.CreateGlobalWeapon(ballWeaponName);
             _networkedGunball = GetComponent<NetworkedGunball>();
+            GameCoordinator.instance.CreateGlobalWeapon(ballWeaponName);
         }
 
         void Update()
@@ -128,9 +128,7 @@ namespace Gunball.MapObject
         }
 
         public void EndEffect()
-        {
-            
-        }
+        {}
 
         public void CallBallThrow(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
         {
