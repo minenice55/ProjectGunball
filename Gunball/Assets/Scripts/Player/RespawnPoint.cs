@@ -6,15 +6,11 @@ namespace Gunball.MapObject
 {
     public class RespawnPoint : MonoBehaviour, ITeamObject
     {
-        [SerializeField] bool IsForRammer = true;
+        [SerializeField] public bool IsForRammer = true;
         [SerializeField] ITeamObject.Teams Team;
 
-        Player _player;
-
-        public void AssignPlayer(Player player)
-        {
-            _player = player;
-        }
+        public Vector3 Position {get => transform.position;}
+        public Quaternion Facing {get => transform.rotation;}
 
         public ITeamObject.Teams ObjectTeam
         {
@@ -23,5 +19,7 @@ namespace Gunball.MapObject
                 return Team;
             }
         }
+
+        public void SetTeam(ITeamObject.Teams team){}
     }
 }

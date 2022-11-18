@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Gunball.MapObject;
-using Gunball.WeaponSystem;
-using Cinemachine;
 
 namespace Gunball
 {
@@ -26,8 +24,6 @@ namespace Gunball
         
         NetworkVariable<NetworkedPlayerState> _netState = new NetworkVariable<NetworkedPlayerState>(readPerm: NetworkVariableReadPermission.Everyone, writePerm: NetworkVariableWritePermission.Owner);
         NetworkedPlayerState PlayerState { get => _netState.Value; set => _netState.Value = value; }
-
-        // Start is called before the first frame update
         void Start()
         {
             if (_player != null)
@@ -53,6 +49,8 @@ namespace Gunball
                 Destroy(playerCineTarget);
                 _player.IsPlayer = false;
 
+                _player.SetTeam(PlayerState.PlayerTeam);
+
                 _netState.OnValueChanged += SyncPlayerState;
             }
         }
@@ -68,10 +66,12 @@ namespace Gunball
                     Velocity = _player.Velocity,
                     AimingAngle = _player.AimingAngle,
                     LastGroundRotation = _player.VisualModel.transform.rotation.eulerAngles.y,
+                    InAction = _player.InAction,
                     Health = _player.Health,
                     RespawnStartPos = _player.RespawnStart,
                     RespawnEndPos = _player.RespawnEnd,
                     RespawnTime = _player.RespawnTime,
+                    PlayerTeam = _player.ObjectTeam
                 };
             }
             else
@@ -105,6 +105,7 @@ namespace Gunball
             lerpTarget = newState.Position;
             transform.position = Vector3.SmoothDamp(transform.position, lerpTarget, ref lerpVel, NetLerpTime);
             lastGroundRotation = newState.LastGroundRotation;
+            _player.InAction = newState.InAction;
             _player.Health = newState.Health;
             respawnStart = newState.RespawnStartPos;
             respawnEnd = newState.RespawnEndPos;
@@ -123,6 +124,11 @@ namespace Gunball
             {
                 transform.position = respawnStart;
                 _player.VisualModel.transform.LookAt(respawnEnd);
+            }
+
+            if (lastState.PlayerTeam != newState.PlayerTeam)
+            {
+                _player.SetTeam(newState.PlayerTeam);
             }
         }
 
@@ -153,7 +159,19 @@ namespace Gunball
         [ServerRpc]
         public void InflictDamageServerRpc(float damage, ulong targetNetId, ulong sourceNetId)
         {
-            InflictDamageClientRpc(damage, targetNetId, sourceNetId);
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target != null && !target.IsDead)
+            {
+                if (NetworkManager.SpawnManager.SpawnedObjects[targetNetId].IsOwnedByServer && !IsOwnedByServer)
+                {
+                    IDamageSource source = NetworkManager.SpawnManager.SpawnedObjects[sourceNetId].GetComponent<IDamageSource>();
+                    target.DoDamage(damage, source);
+                }
+                else
+                {
+                    InflictDamageClientRpc(damage, targetNetId, sourceNetId);
+                }
+            }
         }
         [ClientRpc]
         public void InflictDamageClientRpc(float damage, ulong targetNetId, ulong sourceNetId)
@@ -176,7 +194,19 @@ namespace Gunball
         [ServerRpc]
         public void InflictKnockbackServerRpc(Vector3 force, Vector3 pos, float knockbackTimer, ulong targetNetId, ulong sourceNetId)
         {
-            InflictKnockbackClientRpc(force, pos, knockbackTimer, targetNetId, sourceNetId);
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target != null)
+            {
+                if (NetworkManager.SpawnManager.SpawnedObjects[targetNetId].IsOwnedByServer && !IsOwnedByServer)
+                {
+                    target.SetKnockbackTimer(knockbackTimer);
+                    target.Knockback(force, pos);
+                }
+                else
+                {
+                    InflictKnockbackClientRpc(force, pos, knockbackTimer, targetNetId, sourceNetId);
+                }
+            }
         }
         [ClientRpc]
         public void InflictKnockbackClientRpc(Vector3 force, Vector3 pos, float knockbackTimer, ulong targetNetId, ulong sourceNetId)
@@ -185,7 +215,7 @@ namespace Gunball
             IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
             if (target == null)
             {
-                Debug.LogError("Player NetInflictKnockback Client RPC: Target or null!");
+                Debug.LogError("Player NetInflictKnockback Client RPC: Target is null!");
                 return;
             }
             target.SetKnockbackTimer(knockbackTimer);
@@ -199,7 +229,19 @@ namespace Gunball
         [ServerRpc]
         public void InflictHealingServerRpc(float healing, ulong targetNetId, ulong sourceNetId)
         {
-            InflictHealingClientRpc(healing, targetNetId, sourceNetId);
+            IShootableObject target = NetworkManager.SpawnManager.SpawnedObjects[targetNetId].GetComponent<IShootableObject>();
+            if (target != null && !target.IsDead)
+            {
+                if (NetworkManager.SpawnManager.SpawnedObjects[targetNetId].IsOwnedByServer && !IsOwnedByServer)
+                {
+                    IDamageSource source = NetworkManager.SpawnManager.SpawnedObjects[sourceNetId].GetComponent<IDamageSource>();
+                    target.RecoverDamage(healing, source);
+                }
+                else
+                {
+                    InflictHealingClientRpc(healing, targetNetId, sourceNetId);
+                }
+            }
         }
         [ClientRpc]
         public void InflictHealingClientRpc(float healing, ulong targetNetId, ulong sourceNetId)
@@ -224,12 +266,15 @@ namespace Gunball
             short aimingHorizontal;
             short aimingVertical;
             short groundRotationOrAirBasis;
+            bool inAction;
 
             float health;
 
             Vector3 respawnStart;
             Vector3 respawnEnd;
             short respawnTime;
+
+            byte playerTeam;
 
             public Vector3 Position { get => position; set => position = value; }
             public Vector3 Velocity { get => velocity; set => velocity = value; }
@@ -244,12 +289,15 @@ namespace Gunball
             }
 
             public float LastGroundRotation { get => groundRotationOrAirBasis; set => groundRotationOrAirBasis = (short)value; }
+            public bool InAction { get => inAction; set => inAction = value; }
 
             public float Health { get => health; set => health = value; }
 
             public Vector3 RespawnStartPos { get => respawnStart; set => respawnStart = value; }
             public Vector3 RespawnEndPos { get => respawnEnd; set => respawnEnd = value; }
             public float RespawnTime { get => respawnTime; set => respawnTime = (short)value; }
+
+            public ITeamObject.Teams PlayerTeam { get => (ITeamObject.Teams)playerTeam; set => playerTeam = (byte)value; }
 
             public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
             {
@@ -259,12 +307,15 @@ namespace Gunball
                 serializer.SerializeValue(ref aimingHorizontal);
                 serializer.SerializeValue(ref aimingVertical);
                 serializer.SerializeValue(ref groundRotationOrAirBasis);
+                serializer.SerializeValue(ref inAction);
 
                 serializer.SerializeValue(ref health);
 
                 serializer.SerializeValue(ref respawnStart);
                 serializer.SerializeValue(ref respawnEnd);
                 serializer.SerializeValue(ref respawnTime);
+
+                serializer.SerializeValue(ref playerTeam);
             }
         }
     }

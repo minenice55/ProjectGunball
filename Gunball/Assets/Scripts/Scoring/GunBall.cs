@@ -28,6 +28,8 @@ namespace Gunball.MapObject
         public Transform Transform { get => transform; }
         public IShootableObject.ShootableType Type { get { return _owner == null ? IShootableObject.ShootableType.VsBall : IShootableObject.ShootableType.None; } }
 
+        public Vector3 Velocity { get => _rigidbody.velocity; set => _rigidbody.velocity = value; }
+        public float LastThrowTime {set => lastThrowTime = value; }
         public Player Owner { get => _owner; }
 
         float lastThrowTime = Single.MinValue;
@@ -36,17 +38,21 @@ namespace Gunball.MapObject
         #region Private Variables
         Player _owner = null;
         Vector3 origScale;
+
+        NetworkedGunball _networkedGunball;
         #endregion
 
         #region Methods
         void Start()
         {
             origScale = transform.localScale;
+            _networkedGunball = GetComponent<NetworkedGunball>();
             GameCoordinator.instance.CreateGlobalWeapon(ballWeaponName);
         }
 
         void Update()
         {
+            if (_networkedGunball != null && !_networkedGunball.IsOwner) return;
             if (_owner != null)
             {
                 DoEffect();
@@ -59,9 +65,18 @@ namespace Gunball.MapObject
             if (Time.time - lastThrowTime < 0.5f) return;
             if (other.tag == "Player")
             {
-                Player play = other.gameObject.GetComponent<Player>();
-                if (!play.InAction)
-                    Pickup(play);
+                if (_networkedGunball == null)
+                {
+                    Player play = other.gameObject.GetComponent<Player>();
+                    DoBallPickup(play);
+                }
+                else
+                {
+                    NetworkedPlayer play = other.gameObject.GetComponent<NetworkedPlayer>();
+                    if (!play.IsLocalPlayer) return;
+                    ulong pid = other.gameObject.GetComponent<NetworkedPlayer>().OwnerClientId;
+                    _networkedGunball.RequestSetOwnerServerRpc(pid);
+                }
             }
         }
 
@@ -113,17 +128,41 @@ namespace Gunball.MapObject
         }
 
         public void EndEffect()
+        {}
+
+        public void CallBallThrow(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
         {
+            if (_networkedGunball != null)
+            {
+                _networkedGunball.RequestThrowServerRpc(rootPos, spawnPos, facing);
+            }
+            else
+            {
+                DoBallThrow(rootPos, spawnPos, facing);
+                _owner.ResetWeapon();
+                ResetOwner();
+            }
+        }
+
+        public void DoBallThrow(Vector3 rootPos, Vector3 spawnPos, Vector3 facing)
+        {
+            if (_owner == null || _owner.Weapon == null) return;
             WeaponVsBall wp = (WeaponVsBall)_owner.Weapon;
-            transform.position = wp.OverrideSpawnPos();
+            transform.position = spawnPos;
             transform.localScale = origScale;
             _rigidbody.isKinematic = false;
 
             lastThrowTime = Time.time;
 
-            _rigidbody.velocity = wp.FacingDirection * wp.GetSpawnSpeed() + _owner.Velocity;
-            if (_owner != null) _owner.VsBall = null;
-            _owner = null;
+            _rigidbody.velocity = facing * wp.GetSpawnSpeed() + _owner.Velocity;
+            _owner.ResetWeapon();
+            ResetOwner();
+        }
+
+        public void DoBallPickup(Player play)
+        {
+            if (!play.InAction)
+                Pickup(play);
         }
 
         public void ResetOwner()
@@ -134,19 +173,28 @@ namespace Gunball.MapObject
             transform.localScale = origScale;
         }
 
+        public void CallDeathDrop()
+        {
+            if (_networkedGunball != null)
+            {
+                _networkedGunball.RequestDeathDropServerRpc();
+            }
+            else
+            {
+                DeathDrop();
+            }
+        }
+
         public void DeathDrop()
         {
-            if (_owner != null)
-            {
-                if (_owner != null) { _owner.VsBall = null; _owner.ResetWeapon(); }
-                _owner = null;
-            }
             transform.localScale = origScale;
             _rigidbody.isKinematic = false;
 
             lastThrowTime = Time.time;
 
             _rigidbody.velocity = Vector3.up * 8f;
+            if (_owner != null) _owner.ResetWeapon();
+            ResetOwner();
         }
 
         public static Vector3 TryBulletMove(Vector3 bulletSpawnPos, Vector3 force, float drag, out Vector3[] segments)

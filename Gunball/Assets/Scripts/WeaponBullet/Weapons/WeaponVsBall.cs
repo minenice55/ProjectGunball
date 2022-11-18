@@ -65,8 +65,7 @@ namespace Gunball.WeaponSystem
 
         public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false)
         {
-            //todo: make ball compensate for net delay?
-            ball.EndEffect();
+            player.VsBall.CallBallThrow(rootPos, spawnPos, facing);
         }
 
         public override IEnumerator DoFireSequence(float delay, Player player)
@@ -74,17 +73,7 @@ namespace Gunball.WeaponSystem
             player.InFireCoroutine = true;
             if (delay > 0)
                 yield return new WaitForSeconds(delay);
-            
-            if (_netWeapon != null)
-            {
-                if (_netWeapon.IsOwner)
-                    _netWeapon.NetCreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection);
-            }
-            else
-                CreateWeaponBullet(RootSpawnPos.position, BulletSpawnPos.position, facingDirection, player);
-            player.VsBall = null;
-            ball.ResetOwner();
-            player.ResetWeapon();
+            CreateWeaponBullet(RootSpawnPos.position, OverrideSpawnPos(), facingDirection, player);
             player.InFireCoroutine = false;
         }
     }

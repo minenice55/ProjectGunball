@@ -5,7 +5,7 @@ using Cinemachine;
 
 namespace Gunball.MapObject
 {
-    public class RespawnRammer : MonoBehaviour
+    public class RespawnRammer : MonoBehaviour, ITeamObject
     {
         [SerializeField] Player owner;
         [SerializeField] Transform noPoseTarget;
@@ -16,6 +16,8 @@ namespace Gunball.MapObject
 
         [SerializeField] CinemachineVirtualCamera cutinCam;
         [SerializeField] CinemachineVirtualCamera aimingCam;
+        [SerializeField] CinemachineVirtualCamera vsIntroCam;
+        [SerializeField] Animator introCamAnim;
 
         CinemachinePOV pov;
 
@@ -23,27 +25,39 @@ namespace Gunball.MapObject
         Vector3 targetPosition;
         RaycastHit[] hitsBuffer = new RaycastHit[16];
 
+        ITeamObject.Teams _team;
+
+        NetworkedRespawnRammer _netRammer;
+        public Vector3 AimingAt { get => targetPosition; }
+        public Transform VisualModel { get => visTransform; }
+        public bool Aiming { get => _aiming; }
+        public ITeamObject.Teams ObjectTeam { get => _team; }
+
+        public bool IsFirstSpawn;
+
         // Start is called before the first frame update
         void Start()
         {
             pov = aimingCam.GetCinemachineComponent<CinemachinePOV>();
+            _netRammer = GetComponent<NetworkedRespawnRammer>();
         }
 
         // Update is called once per frame
         void Update()
         {
             if (owner == null) return;
+            if (_netRammer != null && !_netRammer.IsOwner) return;
             if (_aiming)
             {
                 redirected = false;
                 FindLaunchPosition(visTransform.position, owner.CameraDirection, 8);
                 visTransform.LookAt(targetPosition);
                 Debug.DrawLine(visTransform.position, targetPosition, Color.green);
-                if (Input.GetButtonDown("Attack"))
+                if (!IsFirstSpawn && Input.GetButtonDown("Attack"))
                 {
                     _aiming = false;
                     owner.FinishRespawnSequence(respawnPosition.position, targetPosition, pov.m_HorizontalAxis.Value + transform.rotation.eulerAngles.y);
-                    anim.Play("RespawnFire");
+                    PlayRammerFire();
                 }
             }
             else
@@ -53,12 +67,41 @@ namespace Gunball.MapObject
             }
         }
 
+        public void RemoveCameras()
+        {
+            Destroy(cutinCam.gameObject);
+            Destroy(aimingCam.gameObject);
+        }
+
+        public void SetOwner(GameObject owner)
+        {
+            this.owner = owner.GetComponent<Player>();
+            this.owner.SetRespawnRammer(this);
+            if (_netRammer != null && _netRammer.IsOwner)
+            {
+                _netRammer.SetOwner(owner);
+            }
+        }
+
+        public void StartIntroSequence()
+        {
+            visTransform.LookAt(noPoseTarget);
+            targetPosition = noPoseTarget.position;
+            CinemachineSwitcher.SwitchTo(vsIntroCam);
+            introCamAnim.Play("VsIntro");
+            owner.transform.position = respawnPosition.position;
+
+            Invoke("StartRespawnSequence", 1.75f);
+        }
+
         public void StartRespawnSequence()
         {
             visTransform.LookAt(noPoseTarget);
+            targetPosition = noPoseTarget.position;
             CinemachineSwitcher.SwitchTo(cutinCam);
-            anim.Play("RespawnPrepare");
             owner.transform.position = respawnPosition.position;
+            PlayRammerPrepare();
+
             Invoke("StartAimingSequence", 0.5f);
         }
 
@@ -71,6 +114,36 @@ namespace Gunball.MapObject
         public void EnableAiming()
         {
             _aiming = true;
+        }
+
+        public void DoRammerAutoFire()
+        {
+            IsFirstSpawn = false;
+            _aiming = false;
+            if (owner == null) return;
+            if (_netRammer != null && !_netRammer.IsOwner) return;
+            owner.FinishRespawnSequence(respawnPosition.position, targetPosition, pov.m_HorizontalAxis.Value + transform.rotation.eulerAngles.y);
+            PlayRammerFire();
+        }
+
+        public void PlayRammerPrepare()
+        {
+            anim.Play("RespawnPrepare");
+            if (_netRammer != null)
+            {
+                if (_netRammer.IsOwner)
+                    _netRammer.DoRammerPrepareServerRpc();
+            }
+        }
+
+        public void PlayRammerFire()
+        {
+            anim.Play("RespawnFire");
+            if (_netRammer != null)
+            {
+                if (_netRammer.IsOwner)
+                    _netRammer.DoRammerFireServerRpc();
+            }
         }
 
         float DistanceFromPoint(Vector3 point1, Vector3 point2)
@@ -119,6 +192,14 @@ namespace Gunball.MapObject
                     return;
                 }
             }
+        }
+
+        public void SetTeam(ITeamObject.Teams team)
+        {
+            Debug.Log("Setting rammer team to " + team);
+            _team = team;
+            if (owner != null)
+                owner.SetTeam(team);
         }
     }
 }

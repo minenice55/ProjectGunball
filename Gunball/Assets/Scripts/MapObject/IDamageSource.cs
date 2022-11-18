@@ -6,7 +6,7 @@ namespace Gunball.MapObject
     {
         GameObject gameObject { get; }
         public void InflictKnockback(Vector3 force, Vector3 pos, float knockbackTimer, IShootableObject target);
-        public void InflictDamage(float damage, IShootableObject target);
+        public void InflictDamage(float damage, IShootableObject target, bool doCharge = true);
         public void InflictHealing(float damage, IShootableObject target);
     }
 }

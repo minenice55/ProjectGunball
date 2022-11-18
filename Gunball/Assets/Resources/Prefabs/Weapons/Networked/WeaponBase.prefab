@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 549134579bb10cb46bed3e8ba0872e3e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  IsGlobalWeapon: 0
   WpPrm:
     MaxAmmo: 0
     AmmoClip: 0
@@ -56,7 +57,6 @@ MonoBehaviour:
   RootSpawnPos: {fileID: 0}
   BulletSpawnPos: {fileID: 0}
   BulletObject: {fileID: 0}
-  IsGlobalWeapon: 1
   IgnoreColliders: []
 --- !u!114 &6451875193003247460
 MonoBehaviour:

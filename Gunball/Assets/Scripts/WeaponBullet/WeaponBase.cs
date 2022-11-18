@@ -8,6 +8,7 @@ namespace Gunball.WeaponSystem
 {
     public class WeaponBase : MonoBehaviour
     {
+        [SerializeField] public bool IsGlobalWeapon;
         [SerializeField] public WeaponParam WpPrm;
         public const float STEP_TIME = 1 / 30f;
         [SerializeField] protected Transform RootSpawnPos;
@@ -18,7 +19,6 @@ namespace Gunball.WeaponSystem
         public Vector3 FacingDirection { get { return facingDirection; } }
         public Player Owner { get { return owner; } }
 
-        public bool IsGlobalWeapon = true;
 
         public Collider[] IgnoreColliders;
         protected Vector3 facingDirection;
@@ -53,7 +53,6 @@ namespace Gunball.WeaponSystem
 
             if (_netWeapon != null && _netWeapon.IsOwner)
             {
-                Debug.Log("WeaponBase.SetOwner: " + owner.name);
                 _netWeapon.SetOwner(owner);
             }
         }

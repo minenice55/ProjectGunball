@@ -8,7 +8,7 @@ using Gunball.WeaponSystem;
 
 namespace Gunball.MapObject
 {
-    public class Player : MonoBehaviour, IShootableObject, IDamageSource
+    public class Player : MonoBehaviour, IShootableObject, IDamageSource, ITeamObject
     {
         [System.Flags]
         public enum FiringType
@@ -36,10 +36,14 @@ namespace Gunball.MapObject
         [SerializeField] GameObject visualModel;
         [SerializeField] PlayerParameters playPrm;
         [SerializeField] LayerMask gndCollisionFlags;
-        [SerializeField] GuideManager guideMgr;
+        [SerializeField] GuideManager guideMgrUi;
+        [SerializeField] UIStatusManager statusMgrUi;
         [SerializeField] Vector3 aimOffset;
         [SerializeField] CapsuleCollider _playCollider;
         [SerializeField] RespawnRammer respawnRammer;
+        [SerializeField] Animator uiAnimator;
+
+        [SerializeField] float respawnDeadDuration = 1f;
         #endregion
 
         #region Public Variables
@@ -60,6 +64,8 @@ namespace Gunball.MapObject
         #region Private Variables
         float _hp;
         bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
+        bool _inAction;
+        bool _isFirstSpawn;
         float _dt;
         float _firingTime;
         float _fireRelaxTime = Single.MaxValue;
@@ -73,8 +79,11 @@ namespace Gunball.MapObject
         Quaternion _onJmpRotation;
         FiringType _fireKeys;
 
+        ITeamObject.Teams _team;
+
         Vector3 _startPos;
         float respawnRamTime = 0f;
+        float _respawnDeadTime = 0f;
         Vector3 respawnStart, respawnEnd;
 
         Dictionary<string, GameObject> kitWeapons;
@@ -86,15 +95,17 @@ namespace Gunball.MapObject
         public Vector3 CameraDirection { get { return playerCamera.transform.forward; } }
         public CinemachineVirtualCamera CineCamera { get { return playerCineCamera.VirtualCameraGameObject.GetComponent<CinemachineVirtualCamera>(); } }
         public Vector3 Velocity { get { return _playController.velocity; } set { _playController.velocity = value; } }
-        public float MaxHealth { get { return playPrm.Max_Health; } }
-        public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
-        public bool IsDead { get { return _hp <= 0; } }
         public Transform Transform { get { return transform; } }
         public IShootableObject.ShootableType Type { get { return IShootableObject.ShootableType.Player; } }
         public Transform BallPickupPos { get => vsBallPos; }
         public Transform BallSpawnPos { get => vsWpnBallPos; }
         public FiringType CurrentFireKeys { get => _fireKeys; }
-        public bool InAction { get => Weapon.GetPlayerInAction() || InFireCoroutine || (int)CurrentFireKeys != 0; }
+        public bool InAction { get => Weapon != null ? Weapon.GetPlayerInAction() : false 
+            || InFireCoroutine 
+            || (int)CurrentFireKeys != 0
+            || _inAction; 
+            set => _inAction = value; 
+        }
         public GameObject VisualModel { get => visualModel; }
         public Vector3 AimingAngle { get => new Vector3(playerCamera.transform.rotation.eulerAngles.x, playerCamera.transform.rotation.eulerAngles.y, 0); set => _aimingInput = value; }
         public float SpeedStat { get => IsOnGround ? playPrm.Move_RunSpeed : playPrm.Move_AirSpeed; }
@@ -105,6 +116,13 @@ namespace Gunball.MapObject
         public Vector3 RespawnEnd { get => respawnEnd; }
         #endregion
 
+        #region Inherited Properties
+        public float MaxHealth { get { return playPrm.Max_Health; } }
+        public float Health { get { return _hp; } set { _hp = Mathf.Clamp(value, 0f, MaxHealth); } }
+        public bool IsDead { get { return _hp <= 0; } }
+        public ITeamObject.Teams ObjectTeam { get => _team; }
+        #endregion
+
         #region Built-Ins
         void Start()
         {
@@ -112,10 +130,11 @@ namespace Gunball.MapObject
             _netPlayer = GetComponent<NetworkedPlayer>();
             CreateKitWeapons();
             if (_netPlayer != null && !_netPlayer.IsOwner) return;
+            GameCoordinator.instance.AssignRespawnRammer(this.gameObject);
             
             _startPos = transform.position - Vector3.up * 1.5f;
 
-            guideMgr.SetCamera(playerCamera);
+            guideMgrUi.SetCamera(playerCamera);
             Cursor.lockState = CursorLockMode.Locked;
 
             _hp = 0;
@@ -123,7 +142,16 @@ namespace Gunball.MapObject
             visualModel.SetActive(false);
             SetNoClip(true);
             _playController.velocity = Vector3.zero;
-            StartRespawnSequence();
+
+            CinemachineSwitcher.SwitchTo(GameCoordinator.instance.vsWaitingCam);
+            _isFirstSpawn = true;
+            uiAnimator.Play("StartInitialPose");
+            Invoke("ConfirmJoin", 0.5f);
+        }
+
+        void ConfirmJoin()
+        {
+            GameCoordinator.instance.PlayerJoinConfirm();
         }
 
         void Update()
@@ -146,7 +174,27 @@ namespace Gunball.MapObject
                     DoPlayerMovement();
                     DoWeaponLogic();
                 }
+                if (respawnRammer != null)
+                    guideMgrUi.SetIsRespawnGuide(respawnRammer.Aiming, respawnRammer.AimingAt, ObjectTeam);
+                if (IsDead)
+                {
+                    statusMgrUi.SetRespawning(_respawnDeadTime, respawnDeadDuration + 0.75f, 
+                        (respawnRammer != null) ? respawnRammer.Aiming : false, _isFirstSpawn);
+                }
+                else
+                {
+                    statusMgrUi.SetHealth(Health, MaxHealth);
+                }
             }
+        }
+
+        public void StartGame(float startTime)
+        {
+            _respawnDeadTime = startTime - Time.time;
+            FadeManager.Fade(Time.time, Time.time + 0.25f, startTime - 3f, startTime - 4f);
+            Invoke("StartRespawnIntro", startTime - Time.time - 3.5f);
+            Invoke("ReadyGo", startTime - Time.time - 1.5f);
+            Invoke("FinishRespawnIntro", startTime - Time.time);
         }
 
         public void CreateKitWeapons()
@@ -215,22 +263,24 @@ namespace Gunball.MapObject
             if (_netPlayer != null && _netPlayer.IsOwner)
             {
                 WpGO.GetComponent<NetworkedWeapon>().SetOwnerServerRpc();
+                if (Weapon != null && Weapon.gameObject != null && Weapon.IsGlobalWeapon)
+                    Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
             }
             newWeapon.SetOwner(gameObject);
             Weapon = newWeapon;
-            guideMgr.SetWeapon(Weapon);
-            guideMgr.UpdateGuide();
+            guideMgrUi.SetWeapon(Weapon);
+            guideMgrUi.UpdateGuide();
         }
 
         void SetNullWeapon()
         {
             if (Weapon != null && Weapon.gameObject != null && Weapon.IsGlobalWeapon)
             {
-                if (_netPlayer != null) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
+                if (_netPlayer != null && _netPlayer.IsOwner) Weapon.gameObject.GetComponent<NetworkedWeapon>().RemoveOwnerServerRpc();
             }
             Weapon = null;
-            guideMgr.SetWeapon(Weapon);
-            guideMgr.UpdateGuide();
+            guideMgrUi.SetWeapon(Weapon);
+            guideMgrUi.UpdateGuide();
         }
 
         public void ResetWeapon()
@@ -333,6 +383,9 @@ namespace Gunball.MapObject
             
             ignoreMoveTimer -= _dt;
             if (ignoreMoveTimer < 0f) ignoreMoveTimer = 0f;
+
+            _respawnDeadTime -= _dt;
+            if (_respawnDeadTime < 0f) _respawnDeadTime = 0f;
         }
 
         void PollInput()
@@ -407,7 +460,7 @@ namespace Gunball.MapObject
             if (Weapon != null) 
                 Weapon.SetFacingDirection((playerCameraTarget.forward + (playerCameraTarget.rotation * aimOffset)).normalized);
 
-            guideMgr.UpdateGuide();
+            guideMgrUi.UpdateGuide();
 
             if (Weapon != null && Weapon.RefireCheck(_firingTime, _fireRelaxTime, Weapon.WpPrm))
             {
@@ -475,8 +528,6 @@ namespace Gunball.MapObject
 
         void DoMove(float speed, float accel)
         {
-            // if (_netPlayer.IsOwner)
-            //     Debug.Log("DoMove: " + _input + " kine: " + _playController.isKinematic);
             Vector3 vel = new Vector3(Velocity.x, 0, Velocity.z);
             Vector3 moveDir = playerCamera.transform.TransformDirection(_input);
             moveDir.y = 0f;
@@ -573,13 +624,37 @@ namespace Gunball.MapObject
             }
         }
 
+        void StartRespawnIntro()
+        {
+            respawnRammer.StartIntroSequence();
+        }
+
+        void FinishRespawnIntro()
+        {
+            _isFirstSpawn = false;
+            respawnRammer.DoRammerAutoFire();
+            uiAnimator.Play("VsIntro");
+        }
+
+        void ReadyGo()
+        {
+            uiAnimator.Play("ReadyGo");
+        }
+
+        public void SetRespawnRammer(RespawnRammer rammer)
+        {
+            respawnRammer = rammer;
+        }
+
         public void FinishRespawnSequence(Vector3 startPos, Vector3 targetPos, float xAxis)
         {
+            _isFirstSpawn = false;
             Health = playPrm.Max_Health;
             visualModel.SetActive(true);
             transform.position = startPos;
             visualModel.transform.LookAt(targetPos);
             playerCineCamera.m_XAxis.Value = xAxis;
+            playerCineCamera.m_YAxis.Value = 0.5f;
             respawnRamTime = 0.66f;
             respawnStart = startPos;
             respawnEnd = targetPos + Vector3.up * 1f;
@@ -622,7 +697,6 @@ namespace Gunball.MapObject
             if (IsDead) return;
             if (respawnRamTime > 0f) return;
             // log damage
-            Debug.Log("Took " + damage + " damage. Health remaining: " + (Health - damage));
             Health -= damage;
             if (IsDead)
             {
@@ -638,7 +712,6 @@ namespace Gunball.MapObject
             if (IsDead) return;
             if (respawnRamTime > 0f) return;
             // log recovery
-            Debug.Log("Recovered " + healing + " damage");
             Health += healing;
         }
 
@@ -647,18 +720,24 @@ namespace Gunball.MapObject
             Health = 0;
             if (VsBall != null)
             {
-                VsBall.DeathDrop();
+                VsBall.CallDeathDrop();
             }
             ChangeWeapon(null);
             visualModel.SetActive(false);
             SetNoClip(true);
             _playController.velocity = Vector3.zero;
-            Invoke("StartRespawnSequence", 1f);
+            _respawnDeadTime = respawnDeadDuration + 0.75f;
+            Invoke("StartRespawnSequence", respawnDeadDuration);
             return;
         }
 
         public void InflictKnockback(Vector3 force, Vector3 pos, float knockbackTimer, IShootableObject target)
         {
+            ITeamObject teamObject = target as ITeamObject;
+            if (teamObject != null)
+            {
+                if (ObjectTeam == teamObject.ObjectTeam && target != (IShootableObject) this) return;
+            }
             if (_netPlayer != null)
             {
                 if (_netPlayer.IsOwner)
@@ -668,14 +747,23 @@ namespace Gunball.MapObject
             target.SetKnockbackTimer(knockbackTimer);
         }
 
-        public void InflictDamage(float damage, IShootableObject target)
+        public void InflictDamage(float damage, IShootableObject target, bool doCharge = true)
         {
+            ITeamObject teamObject = target as ITeamObject;
+            if (teamObject != null)
+            {
+                if (ObjectTeam == teamObject.ObjectTeam && target != (IShootableObject) this) return;
+            }
             if (_netPlayer != null)
             {
                 if (_netPlayer.IsOwner)
                     _netPlayer.NetInflictDamage(damage, target);
             }
             target.DoDamage(damage, this);
+
+            //TODO: call a build super charge function passing the damage (may have to make sure supers don't build off themselves)
+            // if (doCharge)
+            // {}
         }
 
         public void InflictHealing(float healing, IShootableObject target)
@@ -686,6 +774,13 @@ namespace Gunball.MapObject
                     _netPlayer.NetInflictHealing(healing, target);
             }
             target.RecoverDamage(healing, this);
+        }
+
+        public void SetTeam(ITeamObject.Teams team)
+        {
+            _team = team;
+            if (_netPlayer != null && _netPlayer.IsOwner)
+                statusMgrUi.SetTeam(team);
         }
         #endregion
 
