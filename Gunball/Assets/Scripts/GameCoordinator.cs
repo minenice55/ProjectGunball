@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Gunball.WeaponSystem;
+using Gunball.Interface;
 using Gunball.MapObject;
 using Cinemachine;
+using UnityEngine.SceneManagement;
 
 namespace Gunball
 {
     using static WeaponDictionary;
     public class GameCoordinator : MonoBehaviour
     {
+        [SerializeField] ScoringSystem scoringSystem; // in unity editor, drag scoring system object into field
         [SerializeField] int maxPlayers = 2;
         [SerializeField] public CinemachineVirtualCamera vsWaitingCam;
         [SerializeField] GameObject waitingCamRoot;
@@ -270,6 +273,12 @@ namespace Gunball
             else
             {
                 return Color.white;
+            }
+        }
+
+        public void EndGame(){
+            if (scoringSystem.SideAScore == 3 || scoringSystem.SideBScore == 3){
+                SceneManager.LoadScene("EndGameUI");
             }
         }
     }
