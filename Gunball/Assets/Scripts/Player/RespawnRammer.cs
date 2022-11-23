@@ -19,6 +19,13 @@ namespace Gunball.MapObject
         [SerializeField] CinemachineVirtualCamera vsIntroCam;
         [SerializeField] Animator introCamAnim;
 
+        [SerializeField] AudioSource introStream;
+
+        [SerializeField] AudioSource prepare;
+
+        [SerializeField] AudioSource fireNear;
+        [SerializeField] AudioSource fireFar;
+
         CinemachinePOV pov;
 
         bool _aiming, redirected;
@@ -90,6 +97,7 @@ namespace Gunball.MapObject
             CinemachineSwitcher.SwitchTo(vsIntroCam);
             introCamAnim.Play("VsIntro");
             owner.transform.position = respawnPosition.position;
+            introStream.Play();
 
             Invoke("StartRespawnSequence", 1.75f);
         }
@@ -128,6 +136,7 @@ namespace Gunball.MapObject
 
         public void PlayRammerPrepare()
         {
+            prepare.Play();
             anim.Play("RespawnPrepare");
             if (_netRammer != null)
             {
@@ -138,6 +147,8 @@ namespace Gunball.MapObject
 
         public void PlayRammerFire()
         {
+            fireNear.Play();
+            fireFar.Play();
             anim.Play("RespawnFire");
             if (_netRammer != null)
             {
