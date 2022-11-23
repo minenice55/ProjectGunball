@@ -14,6 +14,10 @@ namespace Gunball
         [SerializeField] int maxPlayers = 2;
         [SerializeField] public CinemachineVirtualCamera vsWaitingCam;
         [SerializeField] GameObject waitingCamRoot;
+        [SerializeField] GameObject mainMenuGO;
+        [SerializeField] MainMenu mainMenu;
+        [SerializeField] GameObject scoringSystem;
+        [SerializeField] GameObject titleCamera;
         [SerializeField] public RespawnPoint[] respawnPoints;
         [SerializeField] public GameObject rammerPrefab;
         [SerializeField] public GameObject ballSpawn;
@@ -25,6 +29,9 @@ namespace Gunball
         public NetworkCoordinator _netCoordinator;
         public bool gameStarted = false;
         int joinedPlayers;
+        Dictionary<ulong, bool> readyPlayers;
+
+        public int JoinedPlayers { get => joinedPlayers; set => joinedPlayers = value; }
         void Awake()
         {
             instance = this;
@@ -32,6 +39,8 @@ namespace Gunball
 
         void Start()
         {
+            scoringSystem.SetActive(false);
+            titleCamera.SetActive(true);
             NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
         }
 
@@ -65,6 +74,7 @@ namespace Gunball
 
         public void PlayerJoinConfirm()
         {
+            titleCamera.SetActive(false);
             if (_netCoordinator == null)
             {
                 ConfirmJoined();
@@ -78,23 +88,75 @@ namespace Gunball
         public void ConfirmJoined()
         {
             joinedPlayers++;
-            if (joinedPlayers >= maxPlayers && !gameStarted)
+            // if (joinedPlayers >= maxPlayers && !gameStarted)
+            // {
+            //     StartGame();
+            // }
+        }
+
+        public void PlayerReadyConfirm(bool ready)
+        {
+            if (_netCoordinator == null)
+            {
+                if (joinedPlayers >= maxPlayers && !gameStarted)
+                {
+                    StartGame();
+                }
+            }
+            else
+            {
+                _netCoordinator.ConfirmReadyServerRpc(ready);
+            }
+        }
+
+        public void AddRequiredReady(ulong clientId)
+        {
+            if (readyPlayers == null)
+            {
+                readyPlayers = new Dictionary<ulong, bool>();
+            }
+            readyPlayers.Add(clientId, false);
+        }
+
+        public void ConfirmReady(bool ready, ulong clientId)
+        {
+            if (readyPlayers == null)
+            {
+                readyPlayers = new Dictionary<ulong, bool>();
+            }
+            if (readyPlayers.ContainsKey(clientId))
+            {
+                readyPlayers[clientId] = ready;
+            }
+            else
+            {
+                readyPlayers.Add(clientId, ready);
+            }
+            bool allReady = true;
+            foreach (bool readyPlayer in readyPlayers.Values)
+            {
+                if (!readyPlayer)
+                {
+                    allReady = false;
+                    break;
+                }
+            }
+            if (allReady && !gameStarted)
             {
                 StartGame();
             }
         }
 
-        void OnGUI() {
-            GUILayout.BeginArea(new Rect(10, 10, 200, 200));
-            if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer) {
-                if (GUILayout.Button("Host")) {
-                    NetworkManager.Singleton.StartHost();
-                }
-                if (GUILayout.Button("Client")) {
-                    NetworkManager.Singleton.StartClient();
-                }
+        public void StartJoinLobby(bool isHost)
+        {
+            if (isHost)
+            {
+                NetworkManager.Singleton.StartHost();
             }
-            GUILayout.EndArea();
+            else
+            {
+                NetworkManager.Singleton.StartClient();
+            }
         }
 
         public GameObject CreateGlobalWeapon(string name)
@@ -179,6 +241,7 @@ namespace Gunball
             gameStarted = true;
             if (_netCoordinator == null)
             {
+                SetPlayLayout();
                 ballSpawn.GetComponent<GunBall>().DoDeath();
                 foreach (Player player in FindObjectsOfType<Player>())
                 {
@@ -189,6 +252,13 @@ namespace Gunball
             {
                 _netCoordinator.StartGameServerRpc();
             }
+        }
+
+        public void SetPlayLayout()
+        {
+            mainMenu.StopMusic();
+            mainMenuGO.SetActive(false);
+            scoringSystem.SetActive(true);
         }
 
         public Color GetTeamColor(ITeamObject.Teams team)

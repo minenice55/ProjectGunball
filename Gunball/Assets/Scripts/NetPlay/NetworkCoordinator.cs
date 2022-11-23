@@ -54,6 +54,7 @@ namespace Gunball
         [ClientRpc]
         public void StartGameClientRpc(double time)
         {
+            _gameCoordinator.SetPlayLayout();
             double timeToWait = time - NetworkManager.ServerTime.Time;
             Player player = NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<Player>();
             player.StartGame((float) timeToWait + Time.time + 5f);
@@ -62,7 +63,23 @@ namespace Gunball
         [ServerRpc(RequireOwnership = false)]
         public void ConfirmJoinedServerRpc(ServerRpcParams serverRpcParams = default)
         {
-            _gameCoordinator.ConfirmJoined();
+            ulong clientId = serverRpcParams.Receive.SenderClientId;
+            _gameCoordinator.JoinedPlayers++;
+            ConfirmJoinedClientRpc(_gameCoordinator.JoinedPlayers);
+            _gameCoordinator.AddRequiredReady(clientId);
+        }
+
+        [ClientRpc]
+        public void ConfirmJoinedClientRpc(int num)
+        {
+            _gameCoordinator.JoinedPlayers = num;
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void ConfirmReadyServerRpc(bool ready, ServerRpcParams serverRpcParams = default)
+        {
+            ulong clientId = serverRpcParams.Receive.SenderClientId;
+            _gameCoordinator.ConfirmReady(ready, clientId);
         }
     }
 }

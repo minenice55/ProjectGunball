@@ -66,6 +66,7 @@ namespace Gunball.MapObject
         bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
         bool _inAction;
         bool _isFirstSpawn;
+        bool _canLockCursor;
         float _dt;
         float _firingTime;
         float _fireRelaxTime = Single.MaxValue;
@@ -135,7 +136,6 @@ namespace Gunball.MapObject
             _startPos = transform.position - Vector3.up * 1.5f;
 
             guideMgrUi.SetCamera(playerCamera);
-            Cursor.lockState = CursorLockMode.Locked;
 
             _hp = 0;
             ChangeWeapon(null);
@@ -145,6 +145,7 @@ namespace Gunball.MapObject
 
             CinemachineSwitcher.SwitchTo(GameCoordinator.instance.vsWaitingCam);
             _isFirstSpawn = true;
+            _canLockCursor = false;
             uiAnimator.Play("StartInitialPose");
             Invoke("ConfirmJoin", 0.5f);
         }
@@ -190,6 +191,8 @@ namespace Gunball.MapObject
 
         public void StartGame(float startTime)
         {
+            _canLockCursor = true;
+            Cursor.lockState = CursorLockMode.Locked;
             _respawnDeadTime = startTime - Time.time;
             FadeManager.Fade(Time.time, Time.time + 0.25f, startTime - 3f, startTime - 4f);
             Invoke("StartRespawnIntro", startTime - Time.time - 3.5f);
@@ -356,8 +359,8 @@ namespace Gunball.MapObject
 
             if (Input.GetButton("Attack"))
             {
-                //TEMPORARY
-                Cursor.lockState = CursorLockMode.Locked;
+                if (_canLockCursor)
+                    Cursor.lockState = CursorLockMode.Locked;
                 if (!_onWpSwitchBlock)
                 {
                     _fireKeys |= FiringType.Primary;
