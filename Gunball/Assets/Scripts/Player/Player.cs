@@ -44,6 +44,10 @@ namespace Gunball.MapObject
         [SerializeField] Animator uiAnimator;
 
         [SerializeField] float respawnDeadDuration = 1f;
+
+        [SerializeField] AudioSource hitSound;
+        [SerializeField] AudioSource damageSound;
+        [SerializeField] AudioSource deathSound;
         #endregion
 
         #region Public Variables
@@ -137,6 +141,14 @@ namespace Gunball.MapObject
 
             guideMgrUi.SetCamera(playerCamera);
 
+            SetLobbyState();
+            Invoke("ConfirmJoin", 0.5f);
+        }
+
+        public void SetLobbyState()
+        {
+            if (_netPlayer != null && !_netPlayer.IsOwner) return;
+            Cursor.lockState = CursorLockMode.None;
             _hp = 0;
             ChangeWeapon(null);
             visualModel.SetActive(false);
@@ -146,8 +158,11 @@ namespace Gunball.MapObject
             CinemachineSwitcher.SwitchTo(GameCoordinator.instance.vsWaitingCam);
             _isFirstSpawn = true;
             _canLockCursor = false;
-            uiAnimator.Play("StartInitialPose");
-            Invoke("ConfirmJoin", 0.5f);
+            if (uiAnimator != null)
+                uiAnimator.Play("StartInitialPose");
+
+            if (respawnRammer != null)
+                respawnRammer.IsFirstSpawn = true;
         }
 
         void ConfirmJoin()
@@ -175,17 +190,7 @@ namespace Gunball.MapObject
                     DoPlayerMovement();
                     DoWeaponLogic();
                 }
-                if (respawnRammer != null)
-                    guideMgrUi.SetIsRespawnGuide(respawnRammer.Aiming, respawnRammer.AimingAt, ObjectTeam);
-                if (IsDead)
-                {
-                    statusMgrUi.SetRespawning(_respawnDeadTime, respawnDeadDuration + 0.75f, 
-                        (respawnRammer != null) ? respawnRammer.Aiming : false, _isFirstSpawn);
-                }
-                else
-                {
-                    statusMgrUi.SetHealth(Health, MaxHealth);
-                }
+                DoUi();
             }
         }
 
@@ -338,6 +343,20 @@ namespace Gunball.MapObject
         #endregion
 
         #region Methods
+        void DoUi()
+        {
+            if (respawnRammer != null)
+                guideMgrUi.SetIsRespawnGuide(respawnRammer.Aiming, respawnRammer.AimingAt, ObjectTeam);
+            if (IsDead)
+            {
+                statusMgrUi.SetRespawning(_respawnDeadTime, respawnDeadDuration + 0.75f, 
+                    (respawnRammer != null) ? respawnRammer.Aiming : false, _isFirstSpawn);
+            }
+            else
+            {
+                statusMgrUi.SetHealth(Health, MaxHealth);
+            }
+        }
         void TickTimers()
         {
             _dt = Time.deltaTime;
@@ -708,6 +727,10 @@ namespace Gunball.MapObject
                 // respawn
                 DoDeath(source);
             }
+            else
+            {
+                damageSound.Play();
+            }
         }
 
         public void RecoverDamage(float healing, IDamageSource source = null)
@@ -725,6 +748,7 @@ namespace Gunball.MapObject
             {
                 VsBall.CallDeathDrop();
             }
+            deathSound.Play();
             ChangeWeapon(null);
             visualModel.SetActive(false);
             SetNoClip(true);
@@ -762,6 +786,7 @@ namespace Gunball.MapObject
                 if (_netPlayer.IsOwner)
                     _netPlayer.NetInflictDamage(damage, target);
             }
+            hitSound.Play();
             target.DoDamage(damage, this);
 
             //TODO: call a build super charge function passing the damage (may have to make sure supers don't build off themselves)

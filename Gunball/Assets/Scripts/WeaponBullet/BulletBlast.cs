@@ -70,5 +70,10 @@ namespace Gunball.WeaponSystem
         {
             Destroy(gameObject);
         }
+
+        public void PlayBlastSound()
+        {
+            GetComponent<AudioSource>()?.Play();
+        }
     }
 }

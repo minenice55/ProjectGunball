@@ -1,18 +1,76 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
+using Gunball.Interface;
+using Gunball.MapObject;
+using Cinemachine;
 
-public class NetworkedScoringSystem : MonoBehaviour
+namespace Gunball
 {
-    // Start is called before the first frame update
-    void Start()
+    public class NetworkedScoringSystem : NetworkBehaviour
     {
+        NetworkVariable<NetworkedScoringState> _netState = new NetworkVariable<NetworkedScoringState>(
+            readPerm: NetworkVariableReadPermission.Everyone, 
+            writePerm: NetworkVariableWritePermission.Server);
         
-    }
+        NetworkedScoringState scoringState { get => _netState.Value; set => _netState.Value = value; }
+        int _alphaScore, _bravoScore;
+        public override void OnNetworkSpawn()
+        {
+            if (!IsServer)
+            {
+                _netState.OnValueChanged += SyncScoreState;
+            }
+        }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
+        public void Update()
+        {
+            if (IsServer)
+            {
+                scoringState = new NetworkedScoringState
+                {
+                    AlphaScore = ScoringSystem.instance.SideAScore,
+                    BravoScore = ScoringSystem.instance.SideBScore,
+                };
+            }
+        }
+
+        public void SyncScoreState(NetworkedScoringState oldState, NetworkedScoringState newState)
+        {
+            _alphaScore = newState.AlphaScore;
+            _bravoScore = newState.BravoScore;
+            ScoringSystem.instance.SetScores(newState.AlphaScore, newState.BravoScore, false);
+        }
+
+        // [ServerRpc]
+        // public void AddScoreServerRpc(int score, int side)
+        // {
+        //     AddScoreClientRpc(score, side);
+        // }
+
+        // [ClientRpc]
+        // public void AddScoreClientRpc(int score, int side)
+        // {
+        //     if (!IsOwner)
+        //     {
+        //         ScoringSystem.instance.AddScore(score, (ITeamObject.Teams)side, false);
+        //     }
+        // }
+
+        public struct NetworkedScoringState : INetworkSerializable
+        {
+            int alphaScore;
+            int bravoScore;
+
+            public int AlphaScore { get => alphaScore; set => alphaScore = value; }
+            public int BravoScore { get => bravoScore; set => bravoScore = value; }
+
+            public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+            {
+                serializer.SerializeValue(ref alphaScore);
+                serializer.SerializeValue(ref bravoScore);
+            }
+        }
     }
 }

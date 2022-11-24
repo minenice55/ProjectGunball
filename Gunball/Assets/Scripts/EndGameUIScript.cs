@@ -5,48 +5,59 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Gunball.Interface;
 
-public class EndGameUIScript : MonoBehaviour
+using TMPro;
+
+namespace Gunball
 {
-    [SerializeField] ScoringSystem scoringSystem;
-
-    public int ScoreA;
-    public int ScoreB;
-
-    public Text WinnersTxt;
-    public Text ASideScore;
-    public Text BSideScore;
-
-    public void Start()
+    public class EndGameUIScript : MonoBehaviour
     {
-        ScoreA = scoringSystem.SideAScore;
-        ScoreB = scoringSystem.SideBScore;
+        public int ScoreA;
+        public int ScoreB;
 
-        ASideScore.text = ScoreA.ToString();
-        BSideScore.text = ScoreB.ToString();
-    }
+        public TMP_Text WinnersTxt;
+        public TMP_Text ASideScore;
+        public TMP_Text BSideScore;
 
-    public void updateWinners(){
-        if (ScoreA > ScoreB){
-            WinnersTxt.text = "Team A Wins!";
+        public void Start()
+        {
+            ScoreA = ScoringSystem.instance.SideAScore;
+            ScoreB = ScoringSystem.instance.SideBScore;
+
+            ASideScore.text = $"{ScoreA}p";
+            BSideScore.text = $"{ScoreB}p";
+
+            UpdateWinners();
         }
-        else{
-            WinnersTxt.text = "Team B Wins!";
+
+        public void UpdateWinners()
+        {
+            ScoreA = ScoringSystem.instance.SideAScore;
+            ScoreB = ScoringSystem.instance.SideBScore;
+
+            ASideScore.text = $"{ScoreA}p";
+            BSideScore.text = $"{ScoreB}p";
+
+            if (ScoreA > ScoreB)
+            {
+                WinnersTxt.text = "Team A Wins!";
+            }
+            else
+            {
+                WinnersTxt.text = "Team B Wins!";
+            }
+        }
+
+        // When click on the lobby button, return to the lobby and reset game state
+        public void ReturnToLobby()
+        {
+            ScoringSystem.instance.ResetScores();
+        }
+
+        // when click on the quit button, quit the game
+        public void Quit()
+        {
+            Debug.Log("Quit");
+            Application.Quit();
         }
     }
-
-
-    // When click on the main menu button, load the main menu scene
-    public void MainMenu()
-    {
-        // UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenuUI");
-    }
-
-    // when click on the quit button, quit the game
-    public void Quit()
-    {
-        // Debug.Log("Quit");
-        // Application.Quit();
-    }
-
-
 }
