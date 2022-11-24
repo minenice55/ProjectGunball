@@ -13,18 +13,24 @@ namespace Gunball
     using static WeaponDictionary;
     public class GameCoordinator : MonoBehaviour
     {
-        [SerializeField] ScoringSystem scoringSystem; // in unity editor, drag scoring system object into field
         [SerializeField] int maxPlayers = 2;
+        [SerializeField] int targetScore = 3;
         [SerializeField] public CinemachineVirtualCamera vsWaitingCam;
         [SerializeField] GameObject waitingCamRoot;
         [SerializeField] GameObject mainMenuGO;
         [SerializeField] MainMenu mainMenu;
-        [SerializeField] GameObject scoringSystem;
+        [SerializeField] GameObject scoringSystemGO;
+        [SerializeField] GameObject endGameGO;
+        [SerializeField] EndGameUIScript endGame;
         [SerializeField] GameObject titleCamera;
         [SerializeField] public RespawnPoint[] respawnPoints;
         [SerializeField] public GameObject rammerPrefab;
         [SerializeField] public GameObject ballSpawn;
         [SerializeField] public Color[] teamColours;
+
+        [SerializeField] AudioSource battleBGM00;
+        [SerializeField] AudioSource battleBGM01;
+        [SerializeField] AudioSource whistleSFX;
         public int assignedRespawnPoints = 0;
         public static GameCoordinator instance;
         public List<WeaponEntry> weapons;
@@ -35,6 +41,12 @@ namespace Gunball
         Dictionary<ulong, bool> readyPlayers;
 
         public int JoinedPlayers { get => joinedPlayers; set => joinedPlayers = value; }
+        public int TargetScore { get => targetScore; }
+        public bool IsHost { get {
+                if (_netCoordinator == null)
+                    return true;
+                return _netCoordinator.IsOwner;
+            } }
         void Awake()
         {
             instance = this;
@@ -42,7 +54,8 @@ namespace Gunball
 
         void Start()
         {
-            scoringSystem.SetActive(false);
+            scoringSystemGO.SetActive(false);
+            endGameGO.SetActive(false);
             titleCamera.SetActive(true);
             NetworkManager.Singleton.ConnectionApprovalCallback = ApprovalCheck;
         }
@@ -255,13 +268,17 @@ namespace Gunball
             {
                 _netCoordinator.StartGameServerRpc();
             }
+
+            battleBGM00.PlayScheduled(AudioSettings.dspTime + 5f);
+            battleBGM01.PlayScheduled(AudioSettings.dspTime + 5f + battleBGM00.clip.length);
         }
 
         public void SetPlayLayout()
         {
             mainMenu.StopMusic();
             mainMenuGO.SetActive(false);
-            scoringSystem.SetActive(true);
+            endGameGO.SetActive(false);
+            scoringSystemGO.SetActive(true);
         }
 
         public Color GetTeamColor(ITeamObject.Teams team)
@@ -276,9 +293,40 @@ namespace Gunball
             }
         }
 
-        public void EndGame(){
-            if (scoringSystem.SideAScore == 3 || scoringSystem.SideBScore == 3){
-                SceneManager.LoadScene("EndGameUI");
+        public void CallEndGame()
+        {
+            if (_netCoordinator == null)
+            {
+                EndGame();
+            }
+            else
+            {
+                if (_netCoordinator.IsOwner)
+                    _netCoordinator.EndGameServerRpc();
+            }
+        }
+
+        public void EndGame()
+        {
+            battleBGM00.Stop();
+            battleBGM01.Stop();
+            whistleSFX.Play();
+            gameStarted = false;
+            foreach (Player player in FindObjectsOfType<Player>())
+            {
+                player.SetLobbyState();
+            }
+            PlayerReadyConfirm(false);
+            endGameGO.SetActive(true);
+            endGame.UpdateWinners();
+        }
+
+        public void CallFixScores(int scoreAlpha, int scoreBravo)
+        {
+            if (_netCoordinator != null)
+            {
+                if (_netCoordinator.IsOwner)
+                    _netCoordinator.SyncScoreServerRpc(scoreAlpha, scoreBravo);
             }
         }
     }

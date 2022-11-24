@@ -5,31 +5,42 @@ using Gunball.Interface;
 
 namespace Gunball.MapObject
 {
-    public class GoalArea : MonoBehaviour
+    public class GoalArea : MonoBehaviour, ITeamObject
     {
         bool goal;
-        public Side ThisSide;
+        public ITeamObject.Teams GoalTeam;
         public Animator Spinner;
+
+        public ITeamObject.Teams ObjectTeam { get => GoalTeam; }
 
         private void OnTriggerEnter(Collider other)
         {
-            Debug.Log("Goal Area Triggered");
             LayerMask ballLayer = LayerMask.GetMask("Ball");
             if (other.CompareTag("VsBall") && !goal)
             {
+                Debug.Log("Goal Area Triggered");
                 GunBall ball = other.GetComponent<GunBall>();
                 if (ball.Owner != null) return;
                 ball.DoDeath();
                 goal = true;
-                FindObjectOfType<ScoringSystem>().SetScore(1, ThisSide);
+                if (GameCoordinator.instance.IsHost)
+                {
+                    ScoringSystem.instance.AddScore(1, ObjectTeam);
+                    GameCoordinator.instance.CallFixScores(ScoringSystem.instance.SideAScore, ScoringSystem.instance.SideBScore);
+                }
                 Invoke(nameof(ResetGoal), 1);
-                Spinner.SetTrigger("spin");
+                Spinner.Play("victorySpin");
             }
         }
 
         void ResetGoal()
         {
             goal = false;
+        }
+
+        public void SetTeam(ITeamObject.Teams team)
+        {
+            return;
         }
     }
 }

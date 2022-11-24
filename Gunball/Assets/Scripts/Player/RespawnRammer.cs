@@ -95,7 +95,7 @@ namespace Gunball.MapObject
             visTransform.LookAt(noPoseTarget);
             targetPosition = noPoseTarget.position;
             CinemachineSwitcher.SwitchTo(vsIntroCam);
-            introCamAnim.Play("VsIntro");
+            introCamAnim.Play("VsIntro", -1, 0);
             owner.transform.position = respawnPosition.position;
             introStream.Play();
 

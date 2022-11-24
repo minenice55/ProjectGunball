@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Gunball.MapObject;
-using Gunball.WeaponSystem;
+using Gunball.Interface;
 using Cinemachine;
 
 namespace Gunball
 {
     public class NetworkCoordinator : NetworkBehaviour
     {
+        [SerializeField] NetworkObject netScore;
         GameCoordinator _gameCoordinator;
 
         void Start() {
@@ -18,6 +19,10 @@ namespace Gunball
         {
             _gameCoordinator = GameCoordinator.instance;
             _gameCoordinator.SetNetCoordinator(this);
+            if (IsServer)
+            {
+                netScore.Spawn();
+            }
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -80,6 +85,33 @@ namespace Gunball
         {
             ulong clientId = serverRpcParams.Receive.SenderClientId;
             _gameCoordinator.ConfirmReady(ready, clientId);
+        }
+
+        [ServerRpc]
+        public void EndGameServerRpc()
+        {
+            EndGameClientRpc();
+        }
+
+        [ClientRpc]
+        public void EndGameClientRpc()
+        {
+            _gameCoordinator.EndGame();
+        }
+
+        [ServerRpc]
+        public void SyncScoreServerRpc(int scoreAlpha, int scoreBravo)
+        {
+            SyncScoreClientRpc(scoreAlpha, scoreBravo);
+        }
+        
+        [ClientRpc]
+        public void SyncScoreClientRpc(int scoreAlpha, int scoreBravo)
+        {
+            if (!IsOwner)
+            {
+                ScoringSystem.instance.SetScores(scoreAlpha, scoreBravo, false);
+            }
         }
     }
 }
