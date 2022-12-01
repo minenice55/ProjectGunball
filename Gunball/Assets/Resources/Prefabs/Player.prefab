@@ -2207,14 +2207,15 @@ MonoBehaviour:
   visualModel: {fileID: 6944341138743339369}
   playPrm:
     Max_Health: 100
-    Move_RunSpeed: 7
+    Move_RunSpeed: 8
     Move_RunAccel: 16
     Move_AirSpeed: 2.5
     Move_AirAccel: 4
     Move_SlideSpeed: 18
     Move_TerminalGravity: 20
-    Jump_Velocity: 6
+    Jump_Velocity: 7
     Jump_Shortening: 3
+    Jump_ExtraActions: 0
     Camera_AutoTurnTime: 2
     Camera_AutoTurnSpeed: 90
     Gnd_RayLength: 0.15

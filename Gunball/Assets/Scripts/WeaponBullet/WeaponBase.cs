@@ -8,6 +8,7 @@ namespace Gunball.WeaponSystem
 {
     public class WeaponBase : MonoBehaviour
     {
+        public static ulong WeaponBulletGroup = 0;
         [SerializeField] public bool IsGlobalWeapon;
         [SerializeField] public WeaponParam WpPrm;
         public const float STEP_TIME = 1 / 30f;
@@ -40,6 +41,12 @@ namespace Gunball.WeaponSystem
         {
             _netWeapon = GetComponent<NetworkedWeapon>();
         }
+
+        public ulong GetBulletGroup()
+        {
+            return WeaponBulletGroup++;
+        }
+
         public void SetFacingDirection(Vector3 dir)
         {
             facingDirection = dir;
@@ -113,6 +120,26 @@ namespace Gunball.WeaponSystem
 
         #region Parameter Structs
         [Serializable]
+        public struct ShotgunParam
+        {
+            [Tooltip("Maximum total damage when hitting multiple bullets")]
+            public float DamageTotalMax;
+            [Tooltip("Params for each bullet group")]
+            public GroupParams[] BulletGroups;
+
+            public struct GroupParams
+            {
+                public int BulletNum;
+                public MoveSimpleParam MoveParam;
+                public DamageParam DamageParam;
+                public CollisionParam CollisionParam;
+                public KnockbackParam KnockbackParam;
+                public SpreadDegreeParam HorizontalSpread;
+                public SpreadDegreeParam VerticalSpread;
+            }
+        }
+
+        [Serializable]
         public struct WeaponParam
         {
             [Tooltip("Maximum reserve ammo")]
@@ -149,13 +176,22 @@ namespace Gunball.WeaponSystem
         }
 
         [Serializable]
-        public struct SpreadParam
+        public struct SpreadDegreeParam
         {
             [Tooltip("Spread in degrees while on ground")]
             public float GroundDegSpread;
             [Tooltip("Spread in degrees while jumping")]
             public float JumpDegSpread;
 
+            [Tooltip("Time to start returning spread value to grounded values after jumping")]
+            public float JumpSpreadLerpStart;
+            [Tooltip("Time to finish returning spread value to grounded values after jumping")]
+            public float JumpSpreadLerpEnd;
+        }
+
+        [Serializable]
+        public struct SpreadBiasParam
+        {
             [Tooltip("Starting spread bias on spawn")]
             public float DegBiasStart;
             [Tooltip("Maximum spread bias while on ground")]
@@ -168,11 +204,6 @@ namespace Gunball.WeaponSystem
             public float DegBiasIncrease;
             [Tooltip("Spread bias decrease while letting go of the trigger")]
             public float DegBiasDecrease;
-
-            [Tooltip("Time to start returning spread value to grounded values after jumping")]
-            public float JumpSpreadLerpStart;
-            [Tooltip("Time to finish returning spread value to grounded values after jumping")]
-            public float JumpSpreadLerpEnd;
         }
 
         [Serializable]
@@ -222,6 +253,26 @@ namespace Gunball.WeaponSystem
             public float Gravity;
             [Tooltip("The bullet's drag when affected by gravity")]
             public float GravityDragRatio;
+        }
+
+        [Serializable]
+        public struct MoveLockOnParam
+        {
+            [Tooltip("How fast the bullet rotates towards its target when far from it")]
+            public float LockOnRotateSpeedMin;
+            [Tooltip("How fast the bullet rotates towards its target when far from it")]
+            public float LockOnRotateSpeedMax;
+            [Tooltip("Distance at which is considered 'far' from the target")]
+            public float LockOnRotateDistMin;
+            [Tooltip("Distance at which is considered 'near' from the target")]
+            public float LockOnRotateDistMax;
+            [Tooltip("How long the bullet waits until starting the lock on")]
+            public float LockOnStartTime;
+            [Tooltip("How long the bullet tries to rotate towards its target")]
+            public float LockOnMaxTime;
+            [Tooltip("Enable guaranteed easing towards the target once lock on time expires (bullet will ignore physics and glide towards the target)")]
+            public bool LockOnGuarantee;
+            public MoveSimpleParam MoveParam;
         }
 
         [Serializable]

@@ -66,6 +66,7 @@ namespace Gunball.MapObject
         #endregion
 
         #region Private Variables
+        int _jumpActions;
         float _hp;
         bool _isOnSlope, _isOnSlopeSteep, _onWpSwitchBlock;
         bool _inAction;
@@ -325,6 +326,9 @@ namespace Gunball.MapObject
                 Vector3.down + direction, out _gndHit,
                 playPrm.Gnd_RayLength + 0.05f,
                 gndCollisionFlags, QueryTriggerInteraction.Ignore);
+            
+            if (IsOnGround)
+                _jumpActions = 0;
         }
         void GetSlopeNormal()
         {
@@ -437,7 +441,7 @@ namespace Gunball.MapObject
                 _onJmpRotation = Quaternion.Euler(0, visualModel.transform.rotation.eulerAngles.y, 0);
             }
 
-            if (Input.GetButtonDown("Jump") && !IsJumping && IsOnGround)
+            if (Input.GetButtonDown("Jump") && JumpCheck())
             {
                 DoJump();
             }
@@ -472,6 +476,16 @@ namespace Gunball.MapObject
                 if (Velocity.y < -playPrm.Move_TerminalGravity)
                     _playController.velocity = new Vector3(Velocity.x, -playPrm.Move_TerminalGravity, Velocity.z);
             }
+        }
+
+        bool JumpCheck()
+        {
+            // TODO: double jump
+            // relevant plarameter value: playPrm.Jump_ExtraActions
+            // if that value is not 0, override the following and just return true
+            // remember to count how many jumps the player has already performed
+            // increment the _jumpActions variable, it already resets on contact with the ground
+            return !IsJumping && IsOnGround;
         }
 
         void DoWeaponLogic()
@@ -829,7 +843,7 @@ namespace Gunball.MapObject
             [Header("Jumping")]
             public float Jump_Velocity = 5.0f;
             public float Jump_Shortening = 1f;
-
+            public int Jump_ExtraActions = 0;
 
             [Header("Misc")]
             public float Camera_AutoTurnTime = 2f;
