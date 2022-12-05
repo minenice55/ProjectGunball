@@ -68,6 +68,7 @@ namespace Gunball
             address.Trim();
             NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address = address;
             NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.ServerListenAddress = address;
+            Debug.Log($"Set Coonnect/Listen IP to {NetworkManager.Singleton.GetComponent<UnityTransport>().ConnectionData.Address}");
         }
     }
 }

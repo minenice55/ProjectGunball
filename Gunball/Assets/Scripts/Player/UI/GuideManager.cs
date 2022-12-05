@@ -12,8 +12,11 @@ namespace Gunball.WeaponSystem
     {
 
         [SerializeField] RectTransform CollidingGuideRect;
+        [SerializeField] RectTransform CollidingGuideOnRect;
+        [SerializeField] RectTransform CollidingGuideEffectiveRect;
         [SerializeField] RectTransform PredictingGuideRect;
         [SerializeField] RectTransform RespawnGuideRect;
+        [SerializeField] RectTransform GoalGuideRect;
         [SerializeField] Transform GuideTarget;
         [SerializeField] LineRenderer trajectoryRenderer;
 
@@ -29,6 +32,8 @@ namespace Gunball.WeaponSystem
             if (Wpn == null || Wpn.GetGuideType() == WeaponBase.GuideType.None)
             {
                 CollidingGuideRect.gameObject.SetActive(false);
+                CollidingGuideOnRect.gameObject.SetActive(false);
+                CollidingGuideEffectiveRect.gameObject.SetActive(false);
                 PredictingGuideRect.gameObject.SetActive(false);
                 return;
             }
@@ -81,8 +86,53 @@ namespace Gunball.WeaponSystem
             }
         }
 
-        Vector3 CastGuide(out Vector3 PredictionPos, out int lastPt, Vector3[] CastPoints)
+        public void SetIsBallGoalGuide(bool showGuide, bool isGoalGuide, ITeamObject.Teams team)
         {
+            if (GoalGuideRect != null)
+            {
+                Vector3 goalGuidePos = Vector3.zero;
+                GoalGuideRect.gameObject.SetActive(showGuide);
+                GoalGuideRect.rotation = Quaternion.Euler(0, 0, Time.deltaTime * 90);
+                GoalGuideRect.gameObject.GetComponent<Image>().color = GameCoordinator.instance.GetTeamColor(team);
+                if (isGoalGuide)
+                {
+                    ITeamObject.Teams opposingTeam = (team == ITeamObject.Teams.Alpha) ? ITeamObject.Teams.Bravo : ITeamObject.Teams.Alpha;
+                    Vector3 pos = GameCoordinator.instance.GetGoalForTeam(opposingTeam).transform.position;
+                    goalGuidePos = Camera.main.WorldToScreenPoint(pos);
+                }
+                else
+                {
+                    goalGuidePos = Camera.main.WorldToScreenPoint(GunBall.ballPos);
+                }
+                if (goalGuidePos.z < 0 || goalGuidePos.x < 0 || goalGuidePos.x > Screen.width || goalGuidePos.y < 0 || goalGuidePos.y > Screen.height)
+                {
+                    bool behind = false;
+                    if (goalGuidePos.z < 0)
+                    {
+                        goalGuidePos.y = -1024;
+                        behind = true;
+                    }
+                    Vector3 indicatorPos = new Vector3();
+                    indicatorPos.x = Mathf.Clamp(goalGuidePos.x, 0, Screen.width);
+                    indicatorPos.y = Mathf.Clamp(goalGuidePos.y, 0, Screen.height);
+                    indicatorPos.z = 0;
+                    if (behind)
+                    {
+                        indicatorPos.x = -1*indicatorPos.x + Screen.width;
+                    }
+                    GoalGuideRect.position = indicatorPos;
+                }
+                else
+                {
+                    GoalGuideRect.position = goalGuidePos;
+                }
+            }
+        }
+
+        Vector3 CastGuide(out Vector3 PredictionPos, out int lastPt, out bool onHit, out bool effectiveHit, Vector3[] CastPoints)
+        {
+            onHit = false;
+            effectiveHit = false;
             lastPt = CastPoints.Length - 1;
             PredictionPos = CastPoints[lastPt];
             // iterate through each cast point checking for a collision in between
@@ -113,6 +163,19 @@ namespace Gunball.WeaponSystem
                     if (hitsBuffer[j].collider.gameObject == Wpn.Owner.gameObject) continue;
                     if (ignore) continue;
                     // we hit something, return the position
+                    onHit = true;
+                    ITeamObject teamObject = shootable as ITeamObject;
+                    if (teamObject == null && shootable != null)
+                    {
+                        effectiveHit = true;
+                    }
+                    else
+                    {
+                        if (teamObject != null && Wpn.Owner.ObjectTeam != teamObject.ObjectTeam)
+                        {
+                            effectiveHit = true;
+                        }
+                    }
                     lastPt = i;
                     return hitsBuffer[j].point;
                 }
@@ -122,9 +185,11 @@ namespace Gunball.WeaponSystem
 
         void DrawShotGuide(Vector3[] points)
         {
-            WorldToScreenPoint(CastGuide(out PredictionPos, out int LastPoint, points), CollidingGuideRect);
+            WorldToScreenPoint(CastGuide(out PredictionPos, out int LastPoint, out bool on, out bool effective, points), CollidingGuideRect);
             WorldToScreenPoint(PredictionPos, PredictingGuideRect);
             GuideTarget.position = PredictionPos;
+            CollidingGuideOnRect.gameObject.SetActive(on);
+            CollidingGuideEffectiveRect.gameObject.SetActive(on && effective);
             DrawDebugGuidePath(points);
         }
 
@@ -132,7 +197,7 @@ namespace Gunball.WeaponSystem
         {
             if (Wpn.GetGuideWidth() <= 0) return;
             List<Vector3> trajectoryPoints = new List<Vector3>();
-            Vector3 endPos = CastGuide(out PredictionPos, out int LastPoint, points);
+            Vector3 endPos = CastGuide(out PredictionPos, out int LastPoint, out bool on, out bool effective, points);
             trajectoryRenderer.startWidth = Wpn.GetGuideWidth();
             trajectoryRenderer.endWidth = Wpn.GetGuideWidth();
             //add points in reverse

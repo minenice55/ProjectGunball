@@ -39,11 +39,11 @@ namespace Gunball
 
             if (ScoreA > ScoreB)
             {
-                WinnersTxt.text = "Team A Wins!";
+                WinnersTxt.text = "Team Alpha Wins!";
             }
             else
             {
-                WinnersTxt.text = "Team B Wins!";
+                WinnersTxt.text = "Team Bravo Wins!";
             }
         }
 

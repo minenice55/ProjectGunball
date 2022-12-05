@@ -10,6 +10,7 @@ namespace Gunball.MapObject
 {
     public class GunBall : MonoBehaviour, IShootableObject, IPickup
     {
+        public static Vector3 ballPos;
         static int numSegments = 0;
         static readonly int maxIterations = 10000;
         static readonly int maxSegmentCount = 300;
@@ -52,6 +53,7 @@ namespace Gunball.MapObject
 
         void Update()
         {
+            ballPos = transform.position;
             if (_networkedGunball != null && !_networkedGunball.IsOwner) return;
             if (_owner != null)
             {

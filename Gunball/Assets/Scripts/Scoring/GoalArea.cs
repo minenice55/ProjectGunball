@@ -26,7 +26,6 @@ namespace Gunball.MapObject
                 if (GameCoordinator.instance.IsHost)
                 {
                     ScoringSystem.instance.AddScore(1, ObjectTeam);
-                    GameCoordinator.instance.CallFixScores(ScoringSystem.instance.SideAScore, ScoringSystem.instance.SideBScore);
                 }
                 Invoke(nameof(ResetGoal), 1);
                 Spinner.Play("victorySpin");

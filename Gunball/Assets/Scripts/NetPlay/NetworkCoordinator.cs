@@ -100,14 +100,16 @@ namespace Gunball
         }
 
         [ServerRpc]
-        public void SyncScoreServerRpc(int scoreAlpha, int scoreBravo)
+        public void SyncScoreServerRpc(int scoreAlpha, int scoreBravo, int scoringSide)
         {
-            SyncScoreClientRpc(scoreAlpha, scoreBravo);
+            SyncScoreClientRpc(scoreAlpha, scoreBravo, scoringSide);
         }
         
         [ClientRpc]
-        public void SyncScoreClientRpc(int scoreAlpha, int scoreBravo)
+        public void SyncScoreClientRpc(int scoreAlpha, int scoreBravo, int scoringSide)
         {
+            var player = NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<Player>();
+            player.GoalUiSequence((ITeamObject.Teams)scoringSide);
             if (!IsOwner)
             {
                 ScoringSystem.instance.SetScores(scoreAlpha, scoreBravo, false);

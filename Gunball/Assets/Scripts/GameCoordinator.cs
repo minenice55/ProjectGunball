@@ -226,6 +226,18 @@ namespace Gunball
             return null;
         }
 
+        public GameObject GetGoalForTeam(ITeamObject.Teams team)
+        {
+            foreach (GoalArea goal in FindObjectsOfType<GoalArea>())
+            {
+                if (goal.ObjectTeam == team)
+                {
+                    return goal.gameObject;
+                }
+            }
+            return null;
+        }
+
         public void AssignRespawnRammer(GameObject player)
         {
             if (_netCoordinator == null)
@@ -321,12 +333,12 @@ namespace Gunball
             endGame.UpdateWinners();
         }
 
-        public void CallFixScores(int scoreAlpha, int scoreBravo)
+        public void CallFixScores(int scoreAlpha, int scoreBravo, ITeamObject.Teams scoringSide)
         {
             if (_netCoordinator != null)
             {
                 if (_netCoordinator.IsOwner)
-                    _netCoordinator.SyncScoreServerRpc(scoreAlpha, scoreBravo);
+                    _netCoordinator.SyncScoreServerRpc(scoreAlpha, scoreBravo, (int) scoringSide);
             }
         }
     }

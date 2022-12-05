@@ -360,6 +360,7 @@ namespace Gunball.MapObject
             {
                 statusMgrUi.SetHealth(Health, MaxHealth);
             }
+            guideMgrUi.SetIsBallGoalGuide(!IsDead, VsBall != null, ObjectTeam);
         }
         void TickTimers()
         {
@@ -675,6 +676,11 @@ namespace Gunball.MapObject
         void ReadyGo()
         {
             uiAnimator.Play("ReadyGo");
+        }
+
+        public void GoalUiSequence(ITeamObject.Teams team)
+        {
+            statusMgrUi.DoTeamGoal(team == ObjectTeam, team);
         }
 
         public void SetRespawnRammer(RespawnRammer rammer)

@@ -44,18 +44,17 @@ namespace Gunball
         }
 
         // [ServerRpc]
-        // public void AddScoreServerRpc(int score, int side)
+        // public void AddScoreServerRpc(int side)
         // {
-        //     AddScoreClientRpc(score, side);
+        //     AddScoreClientRpc(side);
         // }
 
         // [ClientRpc]
-        // public void AddScoreClientRpc(int score, int side)
+        // public void AddScoreClientRpc(int side)
         // {
-        //     if (!IsOwner)
-        //     {
-        //         ScoringSystem.instance.AddScore(score, (ITeamObject.Teams)side, false);
-        //     }
+        //     //get player object
+        //     var player = NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<Player>();
+        //     player.GoalUiSequence((ITeamObject.Teams)side);
         // }
 
         public struct NetworkedScoringState : INetworkSerializable

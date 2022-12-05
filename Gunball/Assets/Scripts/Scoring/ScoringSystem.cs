@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Gunball.MapObject;
+using TMPro;
 
 namespace Gunball.Interface
 {
@@ -10,7 +11,7 @@ namespace Gunball.Interface
     {
         public int SideAScore, SideBScore;
 
-        public Text SideATxt, SideBTxt;
+        public TMP_Text SideATxt, SideBTxt;
 
         public static ScoringSystem instance;
 
@@ -33,6 +34,7 @@ namespace Gunball.Interface
         public void AddScore(int Score, ITeamObject.Teams _side, bool doCheck = true)
         {
             Debug.Log("Score Added " + Score + " to " + _side);
+            ITeamObject.Teams opposingTeam = (_side == ITeamObject.Teams.Alpha) ? ITeamObject.Teams.Bravo : ITeamObject.Teams.Alpha;
             // scoring in opponent's goal should increment *your* score
             if (_side == ITeamObject.Teams.Alpha)
                 SideBScore += Score;
@@ -40,7 +42,7 @@ namespace Gunball.Interface
                 SideAScore += Score;
 
             UpdateTxt();
-            GameCoordinator.instance.CallFixScores(SideAScore, SideBScore);
+            GameCoordinator.instance.CallFixScores(SideAScore, SideBScore, opposingTeam);
             if (doCheck)
                 CheckWinner();
         }
@@ -58,8 +60,8 @@ namespace Gunball.Interface
         void UpdateTxt()
         {
             Debug.Log("Team A Score: " + SideAScore + " Team B Score: " + SideBScore);
-            SideATxt.text = SideAScore.ToString();
-            SideBTxt.text = SideBScore.ToString();
+            SideATxt.text = $"{ITeamObject.Teams.Alpha.ToString()} {SideAScore}";
+            SideBTxt.text = $"{SideBScore} {ITeamObject.Teams.Bravo.ToString()}";
         }
 
         void CheckWinner()
