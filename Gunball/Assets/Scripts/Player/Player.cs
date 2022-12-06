@@ -484,6 +484,14 @@ namespace Gunball.MapObject
             // TODO: double jump
             // relevant plarameter value: playPrm.Jump_ExtraActions
             // if that value is not 0, override the following and just return true
+            if (!IsOnGround && playPrm.Jump_ExtraActions != 0)
+            {
+                if (_jumpActions < playPrm.Jump_ExtraActions)
+                {
+                    _jumpActions++;
+                    return true;
+                }
+            }
             // remember to count how many jumps the player has already performed
             // increment the _jumpActions variable, it already resets on contact with the ground
             return !IsJumping && IsOnGround;
@@ -615,7 +623,16 @@ namespace Gunball.MapObject
         void DoJump()
         {
             IsJumping = true;
-            _playController.velocity = new Vector3(Velocity.x, 0, Velocity.z);
+            if (playPrm.Jump_ExtraActions != 0 && _jumpActions > 0)
+            {
+                Vector3 input = playerCamera.transform.TransformDirection(_input);
+                input.y = 0f;
+                _playController.velocity = playPrm.Move_RunSpeed * input.normalized;
+            }
+            else
+            {
+                _playController.velocity = new Vector3(Velocity.x, 0, Velocity.z);
+            }
             _playController.AddForce(_gndNormal * playPrm.Jump_Velocity, ForceMode.Impulse);
             IsOnGround = false;
             _onJmpRotation = Quaternion.Euler(0, visualModel.transform.rotation.eulerAngles.y, 0);
