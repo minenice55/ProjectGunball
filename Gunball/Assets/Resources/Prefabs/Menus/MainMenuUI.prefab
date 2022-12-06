@@ -1839,7 +1839,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6346515791070505023
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2251,7 +2251,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.21960784, g: 0.21960784, b: 0.21960784, a: 1}
+  m_Color: {r: 0.21960784, g: 0.21960784, b: 0.21960784, a: 0.78431374}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4704,24 +4704,40 @@ MonoBehaviour:
 
     WASD - Move
 
-    Left-Click - Fire
+    Left-Click - Attack
 
     Space
-    - Jump
+    - Jump (Hold to jump higher!)
 
-    Adjust Camera - Mouse
+    Move Camera - Mouse
 
 
-    <b><size=+12>How to Play</size></b>
+    <b><size=+12>How
+    to Play</size></b>
 
-    Get
-    the ball into the opponent''s <color="yellow">goal</color>!
+    Get the ball into the opponent''s <color="yellow">goal</color>!
 
-    Pick it up and
-    toss it with the Fire button, or deflect it by shooting it with your weapon!
+    Pick
+    it up by getting near the ball, and toss it with the Attack button. You can deflect
+    it by shooting it with your weapon!
 
-    First
-    to <color="yellow">three</color> points wins!'
+    First to <color="yellow">three</color>
+    points wins!
+
+
+    <b><size=+12>Tips</size></b>
+
+    The goal is a special hologram
+    solid to the ball, but intangible for players.
+
+    Use the <color="yellow">Respawn
+    Rammers</color> to choose your spawn location after death.
+
+    The Guncaster
+    can <color="yellow">Blast Jump</color> with their projectiles.
+
+    The Infantryman
+    can <color="yellow">Double Jump</color>.'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -4784,7 +4800,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: -42.648407, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -6176,7 +6192,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Gunball
+  m_text: Project Gunball
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 6bd4ebff1fba69642be1f76ce6fa37b4, type: 2}
   m_sharedMaterial: {fileID: -8820087087367903640, guid: 6bd4ebff1fba69642be1f76ce6fa37b4,
@@ -6240,7 +6256,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: -258.49512, y: 17.88871, z: -225.65732, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

@@ -171,6 +171,19 @@ namespace Gunball
             }
         }
 
+        [ServerRpc]
+        public void ResetStatusServerRpc()
+        {
+            ResetStatusClientRpc();
+        }
+        
+        [ClientRpc]
+        public void ResetStatusClientRpc()
+        {
+            var player = NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<Player>();
+            player.BallResetSequence();
+        }
+
         public struct NetworkedGunballState : INetworkSerializable
         {
             Vector3 position;

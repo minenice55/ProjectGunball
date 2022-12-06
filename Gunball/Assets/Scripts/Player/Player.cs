@@ -700,6 +700,11 @@ namespace Gunball.MapObject
             statusMgrUi.DoTeamGoal(team == ObjectTeam, team);
         }
 
+        public void BallResetSequence()
+        {
+            statusMgrUi.DoStatusMessage("Ball reset!", ITeamObject.Teams.Other);
+        }
+
         public void SetRespawnRammer(RespawnRammer rammer)
         {
             respawnRammer = rammer;

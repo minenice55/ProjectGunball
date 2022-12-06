@@ -14,6 +14,8 @@ namespace Gunball.MapObject
         [SerializeField] TMP_Text respawnText;
         [SerializeField] TMP_Text goalText;
         [SerializeField] AudioSource goalNotification;
+        [SerializeField] AudioSource ourNotification;
+        [SerializeField] AudioSource theirNotification;
 
         readonly string[] respawningTexts = new string[] {"Respawning", "Respawning.", "Respawning..", "Respawning..."};
         readonly string[] firstSpawnTexts = new string[] {"Ready", "Ready.", "Ready..", "Ready..."};
@@ -52,6 +54,18 @@ namespace Gunball.MapObject
             Color teamColor = GameCoordinator.instance.GetTeamColor(team);
             goalText.color = teamColor;
             goalText.text = (ourGoal ? "We" : "They") + " Scored a Goal!";
+            animator.Play("TeamScored", -1, 0);
+            if (ourGoal)
+                ourNotification.Play();
+            else
+                theirNotification.Play();
+        }
+
+        public void DoStatusMessage(string status, ITeamObject.Teams team)
+        {
+            Color teamColor = GameCoordinator.instance.GetTeamColor(team);
+            goalText.color = teamColor;
+            goalText.text = status;
             animator.Play("TeamScored", -1, 0);
             goalNotification.Play();
         }

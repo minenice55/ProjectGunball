@@ -100,6 +100,21 @@ namespace Gunball.MapObject
                 _owner = null;
             }
 
+            if (cause != null)
+            {
+                if (_networkedGunball != null && _networkedGunball.IsOwner)
+                {
+                    _networkedGunball.ResetStatusServerRpc();
+                }
+                else
+                {
+                    foreach (Player player in FindObjectsOfType<Player>())
+                    {
+                        player.BallResetSequence();
+                    }
+                }
+            }
+
             transform.rotation = Quaternion.identity;
             transform.localScale = origScale;
             transform.position = SpawnPos;

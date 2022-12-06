@@ -20,7 +20,10 @@ namespace Gunball.MapObject
             {
                 Debug.Log("Goal Area Triggered");
                 GunBall ball = other.GetComponent<GunBall>();
-                if (ball.Owner != null) return;
+                if (ball.Owner != null) 
+                {
+                    ball.CallDeathDrop();
+                }
                 ball.DoDeath();
                 goal = true;
                 if (GameCoordinator.instance.IsHost)
