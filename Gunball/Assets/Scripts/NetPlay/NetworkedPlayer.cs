@@ -52,6 +52,8 @@ namespace Gunball
                 _player.SetTeam(PlayerState.PlayerTeam);
 
                 _netState.OnValueChanged += SyncPlayerState;
+
+                _player.CorrectTeamColor();
             }
         }
 
@@ -129,6 +131,7 @@ namespace Gunball
             if (lastState.PlayerTeam != newState.PlayerTeam)
             {
                 _player.SetTeam(newState.PlayerTeam);
+                _player.CorrectTeamColor();
             }
         }
 

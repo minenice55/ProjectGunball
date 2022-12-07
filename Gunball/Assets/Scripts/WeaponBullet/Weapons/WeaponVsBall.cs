@@ -65,6 +65,7 @@ namespace Gunball.WeaponSystem
 
         public override void CreateWeaponBullet(Vector3 rootPos, Vector3 spawnPos, Vector3 facing, Player player, float postDelay = 0, bool visualOnly = false)
         {
+            player.PlayThrowSound();
             player.VsBall.CallBallThrow(rootPos, spawnPos, facing);
         }
 

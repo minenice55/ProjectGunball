@@ -63,6 +63,7 @@ namespace Gunball
             double timeToWait = time - NetworkManager.ServerTime.Time;
             Player player = NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<Player>();
             player.StartGame((float) timeToWait + Time.time + 5f);
+            _gameCoordinator.StartBGM();
         }
 
         [ServerRpc(RequireOwnership = false)]

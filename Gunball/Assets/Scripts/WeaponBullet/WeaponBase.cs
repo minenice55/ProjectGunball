@@ -126,7 +126,7 @@ namespace Gunball.WeaponSystem
             public float DamageTotalMax;
             [Tooltip("Params for each bullet group")]
             public GroupParams[] BulletGroups;
-
+            [Serializable]
             public struct GroupParams
             {
                 public int BulletNum;
@@ -134,8 +134,10 @@ namespace Gunball.WeaponSystem
                 public DamageParam DamageParam;
                 public CollisionParam CollisionParam;
                 public KnockbackParam KnockbackParam;
-                public SpreadDegreeParam HorizontalSpread;
-                public SpreadDegreeParam VerticalSpread;
+                public float HorizontalDegree;
+                public float VerticalDegree;
+                public float HorizontalOffset;    
+                public float VerticalOffset;
             }
         }
 

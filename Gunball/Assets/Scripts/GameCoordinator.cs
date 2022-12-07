@@ -14,6 +14,7 @@ namespace Gunball
     public class GameCoordinator : MonoBehaviour
     {
         [SerializeField] int maxPlayers = 2;
+        [SerializeField] int useOtherPrefabCount = 1;
         [SerializeField] int targetScore = 3;
         [SerializeField] public CinemachineVirtualCamera vsWaitingCam;
         [SerializeField] GameObject waitingCamRoot;
@@ -27,6 +28,7 @@ namespace Gunball
         [SerializeField] public GameObject rammerPrefab;
         [SerializeField] public GameObject ballSpawn;
         [SerializeField] public Color[] teamColours;
+        [SerializeField] uint[] playerPrefabHashes;
 
         [SerializeField] AudioSource battleBGM00;
         [SerializeField] AudioSource battleBGM01;
@@ -85,6 +87,7 @@ namespace Gunball
             {
                 response.Approved = true;
                 response.CreatePlayerObject = true;
+                response.PlayerPrefabHash = playerPrefabHashes[NetworkManager.Singleton.ConnectedClients.Count >= useOtherPrefabCount ? 1 : 0];
             }
         }
 
@@ -255,6 +258,7 @@ namespace Gunball
                 GameObject rammer = Instantiate(rammerPrefab, pos, facing);
                 rammer.GetComponent<RespawnRammer>().SetOwner(player);
                 rammer.GetComponent<RespawnRammer>().SetTeam(point.ObjectTeam);
+                player.GetComponent<Player>().CorrectTeamColor();
 
                 assignedRespawnPoints++;
             }
@@ -274,13 +278,17 @@ namespace Gunball
                 foreach (Player player in FindObjectsOfType<Player>())
                 {
                     player.StartGame(Time.time + 5f);
+                    StartBGM();
                 }
             }
             else
             {
                 _netCoordinator.StartGameServerRpc();
             }
+        }
 
+        public void StartBGM()
+        {
             battleBGM00.PlayScheduled(AudioSettings.dspTime + 5f);
             battleBGM01.PlayScheduled(AudioSettings.dspTime + 5f + battleBGM00.clip.length);
         }

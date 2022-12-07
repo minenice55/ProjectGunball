@@ -92,6 +92,7 @@ namespace Gunball.MapObject
 
         public void StartIntroSequence()
         {
+            _aiming = false;
             visTransform.LookAt(noPoseTarget);
             targetPosition = noPoseTarget.position;
             CinemachineSwitcher.SwitchTo(vsIntroCam);

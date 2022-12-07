@@ -18,14 +18,13 @@ namespace Gunball.MapObject
         [SerializeField] AudioSource theirNotification;
 
         readonly string[] respawningTexts = new string[] {"Respawning", "Respawning.", "Respawning..", "Respawning..."};
-        readonly string[] firstSpawnTexts = new string[] {"Ready", "Ready.", "Ready..", "Ready..."};
         
         public void SetHealth(float health, float maxHealth)
         {
             respawnText.gameObject.SetActive(false);
             healthText.gameObject.SetActive(true);
             healthBar.value = health / maxHealth;
-            healthText.text = $"{(int)health}/{(int)maxHealth}";
+            healthText.text = $"{Mathf.CeilToInt(health)}/{Mathf.CeilToInt(maxHealth)}";
         }
 
         public void SetRespawning(float respawnProgress, float maxTime, bool aiming, bool isGameStart)

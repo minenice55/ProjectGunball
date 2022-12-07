@@ -48,6 +48,8 @@ namespace Gunball.MapObject
         [SerializeField] AudioSource hitSound;
         [SerializeField] AudioSource damageSound;
         [SerializeField] AudioSource deathSound;
+        [SerializeField] AudioSource fireSound;
+        [SerializeField] AudioSource throwSound;
         #endregion
 
         #region Public Variables
@@ -86,6 +88,8 @@ namespace Gunball.MapObject
         FiringType _fireKeys;
 
         ITeamObject.Teams _team;
+
+        Material _mat;
 
         Vector3 _startPos;
         float respawnRamTime = 0f;
@@ -166,6 +170,14 @@ namespace Gunball.MapObject
                 respawnRammer.IsFirstSpawn = true;
         }
 
+        public void CorrectTeamColor()
+        {
+            if (_mat == null)
+                _mat = new Material(visualModel.GetComponent<Renderer>().material);
+            _mat.color = GameCoordinator.instance.GetTeamColor(ObjectTeam);
+            visualModel.GetComponent<Renderer>().material = _mat;
+        }
+
         void ConfirmJoin()
         {
             GameCoordinator.instance.PlayerJoinConfirm();
@@ -197,10 +209,12 @@ namespace Gunball.MapObject
 
         public void StartGame(float startTime)
         {
+            CorrectTeamColor();
+
             _canLockCursor = true;
             Cursor.lockState = CursorLockMode.Locked;
             _respawnDeadTime = startTime - Time.time;
-            FadeManager.Fade(Time.time, Time.time + 0.25f, startTime - 3f, startTime - 4f);
+            FadeManager.Fade(Time.time, Time.time + 0.25f, startTime - 2.5f, startTime - 3.5f);
             Invoke("StartRespawnIntro", startTime - Time.time - 3.5f);
             Invoke("ReadyGo", startTime - Time.time - 1.5f);
             Invoke("FinishRespawnIntro", startTime - Time.time);
@@ -730,6 +744,18 @@ namespace Gunball.MapObject
             Health = playPrm.Max_Health;
             SetNoClip(false);
             ResetWeapon();
+        }
+
+        public void PlayFireSound()
+        {
+            if (fireSound != null)
+                fireSound.Play();
+        }
+
+        public void PlayThrowSound()
+        {
+            if (throwSound != null)
+                throwSound.Play();
         }
         #endregion
 
